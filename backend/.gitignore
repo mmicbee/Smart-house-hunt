@@ -1,0 +1,4 @@
+smart-house-hunt.db
+.env
+.env.*
+!/.env.example

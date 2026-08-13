@@ -1,27 +1,38 @@
 package main
 
 import (
-        "log"
-        "net/http"
+    "database/sql"
+    "log"
+    "net/http"
 
-        "github.com/gin-gonic/gin"
+    "github.com/gin-gonic/gin"
+    _ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
-        r := gin.Default()
+    db, err := sql.Open("sqlite3", "./smart-house-hunt.db")
+    if err != nil {
+        log.Fatal("failed to open database:", err)
+    }
+    defer db.Close()
 
-        // Health check
-        r.GET("/health", func(c *gin.Context) {
-                c.JSON(http.StatusOK, gin.H{
-                        "status":  "ok",
-                        "message": "Smart House Hunt API is running",
-                })
+    if err := db.Ping(); err != nil {
+        log.Fatal("failed to connect to database:", err)
+    }
+
+    r := gin.Default()
+
+    r.GET("/health", func(c *gin.Context) {
+        c.JSON(http.StatusOK, gin.H{
+            "status":  "ok",
+            "message": "Smart House Hunt API is running",
         })
+    })
 
-        // TODO: Add routes for auth, properties, etc.
+    log.Println("Database: SQLite 3")
+    log.Println("Server starting on :8080")
 
-        log.Println("Server starting on :8080")
-        if err := r.Run(":8080"); err != nil {
-                log.Fatal(err)
-        }
+    if err := r.Run(":8080"); err != nil {
+        log.Fatal(err)
+    }
 }
