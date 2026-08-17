@@ -10,14 +10,14 @@ import (
 )
 
 func main() {
-    db, err := sql.Open("sqlite3", "./smart-house-hunt.db")
-    if err != nil {
-        log.Fatal("failed to open database:", err)
-    }
-    defer db.Close()
+  db, err := database.Connect()
+	if err != nil {
+		log.Fatal("failed to connect to database:", err)
+	}
+	defer db.Close()
 
-    if err := db.Ping(); err != nil {
-        log.Fatal("failed to connect to database:", err)
+	if err := database.RunMigrations(db); err != nil {
+		log.Fatal("failed to run migrations:", err)
     }
 
     r := gin.Default()
@@ -30,6 +30,7 @@ func main() {
     })
 
     log.Println("Database: SQLite 3")
+    log.Println("Migrations: completed")
     log.Println("Server starting on :8080")
 
     if err := r.Run(":8080"); err != nil {
