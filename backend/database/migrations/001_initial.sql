@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS roles (
+    id INTERGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    id INTERGER PRIMARY KEY AUTOINCREMENT,
+    role_id INTERGER NOT NULL,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT _TIMESTAMP,
+
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
+INSERT OR IGNORE INTO roles (name) VALUES
+('tenant'),
+('landlord'),
+('agent'),
+('admin');
