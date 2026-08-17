@@ -1,12 +1,12 @@
 package main
 
 import (
-    "database/sql"
-    "log"
-    "net/http"
+	"log"
+	"net/http"
 
-    "github.com/gin-gonic/gin"
-    _ "github.com/mattn/go-sqlite3"
+	"github.com/gin-gonic/gin"
+
+	"smart-house-hunt/database"
 )
 
 func main() {
