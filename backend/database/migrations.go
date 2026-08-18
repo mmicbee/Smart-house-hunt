@@ -1,7 +1,7 @@
 package database
 
 import (
-	"datadase/sql"
+	"database/sql"
 	"os"
 )
 
