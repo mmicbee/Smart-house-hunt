@@ -209,8 +209,8 @@ returns:
 - [x] Password hashing
 - [x] JWT generation
 - [x] JWT validation middleware
-- [ ] Logout
-- [ ] Protected routes
+- [x] Logout
+- [x] Protected routes
 - [ ] Role-based authorization
 
 ### Roles

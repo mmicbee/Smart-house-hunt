@@ -27,6 +27,23 @@ func Setup(router *gin.Engine, db *sql.DB, cfg *config.Config) {
 
 	api := router.Group("/api")
 	{
+		api.GET("/me", middleware.RequireAuth(cfg.JWTSecret), func(c *gin.Context) {
+			userID := c.GetInt64(middleware.ContextUserID)
+			user, err := usersRepo.FindByID(userID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"message": "could not load profile"})
+				return
+			}
+
+			roleName, _ := usersRepo.RoleByID(user.RoleID)
+			c.JSON(http.StatusOK, gin.H{
+				"id":    user.ID,
+				"name":  user.Name,
+				"email": user.Email,
+				"role":  roleName,
+			})
+		})
+
 		authAPI := api.Group("/auth")
 		{
 			authAPI.POST("/register", authHandler.Register)
