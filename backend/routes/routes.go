@@ -31,6 +31,7 @@ func Setup(router *gin.Engine, db *sql.DB, cfg *config.Config) {
 		{
 			authAPI.POST("/register", authHandler.Register)
 			authAPI.POST("/login", authHandler.Login)
+			authAPI.POST("/logout", middleware.RequireAuth(cfg.JWTSecret), authHandler.Logout)
 		}
 	}
 }

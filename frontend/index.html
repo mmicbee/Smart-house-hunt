@@ -11,6 +11,7 @@
     <div class="container nav">
       <a class="brand" href="index.html">Smart House Hunt</a>
       <nav>
+        <span id="auth-area"></span>
         <a href="pages/properties.html">Find a House</a>
         <a href="pages/login.html">Login</a>
         <a class="btn" href="pages/register.html">Register</a>
@@ -40,5 +41,30 @@
       <p>&copy; 2026 Smart House Hunt</p>
     </div>
   </footer>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const authArea = document.getElementById("auth-area");
+    const user = getCurrentUser();
+
+    if (user) {
+      const greeting = document.createElement("span");
+      greeting.textContent = `Welcome, ${user.name} `;
+      const logoutLink = document.createElement("a");
+      logoutLink.href = "#";
+      logoutLink.textContent = "(log out)";
+      logoutLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        logout();
+      });
+      authArea.appendChild(greeting);
+      authArea.appendChild(logoutLink);
+    } else {
+      const loginLink = document.createElement("a");
+      loginLink.href = "pages/login.html";
+      loginLink.textContent = "Login";
+      authArea.appendChild(loginLink);
+    }
+  </script>
 </body>
 </html>
