@@ -33,3 +33,19 @@ func RequireAuth(secret string) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func RequireRole(roles ...string) gin.HandlerFunc {
+	allowed := make(map[string]bool, len(roles))
+	for _, role := range roles {
+		allowed[role] = true
+	}
+
+	return func(c *gin.Context) {
+		role := c.GetString(ContextRole)
+		if !allowed[role] {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"message": "you do not have permission to access this resource"})
+			return
+		}
+		c.Next()
+	}
+}

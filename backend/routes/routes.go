@@ -50,5 +50,20 @@ func Setup(router *gin.Engine, db *sql.DB, cfg *config.Config) {
 			authAPI.POST("/login", authHandler.Login)
 			authAPI.POST("/logout", middleware.RequireAuth(cfg.JWTSecret), authHandler.Logout)
 		}
+
+		adminAPI := api.Group("/admin",
+			middleware.RequireAuth(cfg.JWTSecret),
+			middleware.RequireRole("admin"),
+		)
+		{
+			adminAPI.GET("/users", func(c *gin.Context) {
+				users, err := usersRepo.List()
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"message": "could not load users"})
+					return
+				}
+				c.JSON(http.StatusOK, gin.H{"users": users})
+			})
+		}
 	}
 }

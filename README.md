@@ -211,7 +211,7 @@ returns:
 - [x] JWT validation middleware
 - [x] Logout
 - [x] Protected routes
-- [ ] Role-based authorization
+- [x] Role-based authorization
 
 ### Roles
 
@@ -597,22 +597,22 @@ Once the foundation is stable, advanced technologies can be introduced where the
 
 # Current Status
 
-**Milestone 1 — Authentication**
+**Milestone 2 — Property Listings**
 
-Milestone 0 (Project Setup) is complete: the backend builds, runs on `:8080`,
-SQLite 3 is connected, migrations run on startup, and `GET /health` returns
-the expected response.
+Milestone 1 (Authentication) is complete: users can register, log in,
+receive a JWT, log out, and access protected endpoints. Passwords are
+bcrypt-hashed, JWTs are validated by middleware, and role-based
+authorization gates admin-only routes.
 
 Next development target:
 
-1. User registration
-2. User login
-3. Password hashing
-4. JWT generation
-5. JWT validation middleware
-6. Logout
-7. Protected routes
-8. Role-based authorization
+1. Landlord — create property
+2. Landlord — edit property
+3. Landlord — delete property
+4. Landlord — upload property images
+5. Landlord — view own listings
+6. Tenant — view approved properties
+7. Tenant — view property details
 
 ---
 

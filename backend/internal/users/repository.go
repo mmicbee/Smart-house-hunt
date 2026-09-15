@@ -32,6 +32,36 @@ func (r *Repository) RoleByID(id int64) (string, error) {
 	return name, nil
 }
 
+func (r *Repository) List() ([]User, error) {
+	rows, err := r.db.Query(`
+		SELECT id, role_id, name, email, created_at, updated_at
+		FROM users
+		ORDER BY id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var all []User
+	for rows.Next() {
+		var user User
+		if err := rows.Scan(
+			&user.ID,
+			&user.RoleID,
+			&user.Name,
+			&user.Email,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		all = append(all, user)
+	}
+
+	return all, rows.Err()
+}
+
 func (r *Repository) Create(user *User) error {
 	query := `
 	INSERT INTO users (role_id, name, email, password)
