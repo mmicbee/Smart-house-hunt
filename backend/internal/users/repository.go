@@ -30,11 +30,11 @@ func (r *Repository) Create(user *User) error {
 	).Scan(
 		&user.ID,
 		&user.CreatedAt,
-		&user.UPdatedAt,
+		&user.UpdatedAt,
 	)
 }
 
-func (r *Repository) FindByEmail(email string) (*user, error) {
+func (r *Repository) FindByEmail(email string) (*User, error) {
 	query := `
 	SELECT id, role_id, name, email, password, created_at, updated_at
 	FROM users

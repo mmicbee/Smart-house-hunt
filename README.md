@@ -169,15 +169,15 @@ The project will be developed incrementally. Each milestone should be working be
 
 Tasks:
 
-- [ ] Set up project structure
-- [ ] Initialize Go module
-- [ ] Install backend dependencies
-- [ ] Connect Go to SQLite 3
-- [ ] Create basic HTTP server
-- [ ] Create health-check endpoint
-- [ ] Create frontend base pages
-- [ ] Connect frontend to backend
-- [ ] Set up Git branches and commits
+- [x] Set up project structure
+- [x] Initialize Go module
+- [x] Install backend dependencies
+- [x] Connect Go to SQLite 3
+- [x] Create basic HTTP server
+- [x] Create health-check endpoint
+- [x] Create frontend base pages
+- [x] Connect frontend to backend
+- [x] Set up Git branches and commits
 
 ### Expected result
 
@@ -597,18 +597,22 @@ Once the foundation is stable, advanced technologies can be introduced where the
 
 # Current Status
 
-**Milestone 0 — Project Setup**
+**Milestone 1 — Authentication**
 
-The project structure has been prepared for the new stack.
+Milestone 0 (Project Setup) is complete: the backend builds, runs on `:8080`,
+SQLite 3 is connected, migrations run on startup, and `GET /health` returns
+the expected response.
 
 Next development target:
 
-1. Connect Go to SQLite 3
-2. Create the initial database schema
-3. Build the authentication module
-4. Implement registration
-5. Implement login
-6. Add JWT authentication
+1. User registration
+2. User login
+3. Password hashing
+4. JWT generation
+5. JWT validation middleware
+6. Logout
+7. Protected routes
+8. Role-based authorization
 
 ---
 
