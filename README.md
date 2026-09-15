@@ -204,9 +204,9 @@ returns:
 
 ### Features
 
-- [ ] User registration
-- [ ] User login
-- [ ] Password hashing
+- [x] User registration
+- [x] User login
+- [x] Password hashing
 - [ ] JWT generation
 - [ ] JWT validation middleware
 - [ ] Logout
