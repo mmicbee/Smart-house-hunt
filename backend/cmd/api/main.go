@@ -24,7 +24,7 @@ func main() {
 	}
 
 	router := gin.Default()
-	routes.Setup(router, db)
+	routes.Setup(router, db, cfg)
 
 	log.Println("Database: SQLite 3")
 	log.Println("Migrations: completed")

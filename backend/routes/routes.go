@@ -6,16 +6,17 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"smart-house-hunt/config"
 	"smart-house-hunt/internal/auth"
 	"smart-house-hunt/internal/users"
 	"smart-house-hunt/middleware"
 )
 
-func Setup(router *gin.Engine, db *sql.DB) {
+func Setup(router *gin.Engine, db *sql.DB, cfg *config.Config) {
 	router.Use(middleware.CORS())
 
 	usersRepo := users.NewRepository(db)
-	authHandler := auth.NewAuthHandler(usersRepo)
+	authHandler := auth.NewAuthHandler(usersRepo, cfg.JWTSecret)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -29,6 +30,7 @@ func Setup(router *gin.Engine, db *sql.DB) {
 		authAPI := api.Group("/auth")
 		{
 			authAPI.POST("/register", authHandler.Register)
+			authAPI.POST("/login", authHandler.Login)
 		}
 	}
 }

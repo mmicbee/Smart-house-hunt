@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/mail"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -13,11 +14,12 @@ import (
 )
 
 type AuthHandler struct {
-	users *users.Repository
+	users  *users.Repository
+	secret string
 }
 
-func NewAuthHandler(usersRepo *users.Repository) *AuthHandler {
-	return &AuthHandler{users: usersRepo}
+func NewAuthHandler(usersRepo *users.Repository, secret string) *AuthHandler {
+	return &AuthHandler{users: usersRepo, secret: secret}
 }
 
 func (h *AuthHandler) Register(c *gin.Context) {
@@ -90,5 +92,52 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		Name:  user.Name,
 		Email: user.Email,
 		Role:  roleName,
+	})
+}
+
+func (h *AuthHandler) Login(c *gin.Context) {
+	var req LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid request body"})
+		return
+	}
+
+	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
+	if req.Email == "" || req.Password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "email and password are required"})
+		return
+	}
+
+	user, err := h.users.FindByEmail(req.Email)
+	if errors.Is(err, sql.ErrNoRows) {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "invalid email or password"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not find account"})
+		return
+	}
+
+	if !CheckPassword(user.Password, req.Password) {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "invalid email or password"})
+		return
+	}
+
+	roleName, _ := h.users.RoleByID(user.RoleID)
+
+	token, err := GenerateToken(h.secret, user.ID, roleName, 24*time.Hour)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not create session token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, LoginResponse{
+		Token: token,
+		User: UserResponse{
+			ID:    user.ID,
+			Name:  user.Name,
+			Email: user.Email,
+			Role:  roleName,
+		},
 	})
 }

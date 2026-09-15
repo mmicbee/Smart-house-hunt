@@ -15,6 +15,13 @@ async function registerUser(userData) {
   });
 }
 
+async function loginUser(credentials) {
+  return apiRequest("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(credentials)
+  });
+}
+
 function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
