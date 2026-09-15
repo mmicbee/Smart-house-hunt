@@ -8,6 +8,13 @@ function saveAuth(data) {
   }
 }
 
+async function registerUser(userData) {
+  return apiRequest("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(userData)
+  });
+}
+
 function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("user");

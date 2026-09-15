@@ -3,16 +3,66 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register - Smart House Hunt</title>
+  <title>Create an account - Smart House Hunt</title>
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-  <main class="container hero">
-    <div>
+  <main class="container auth-page">
+    <form class="auth-card" id="register-form">
       <h1>Create an account</h1>
-      <p>Registration will be connected to the Go API in Milestone 1.</p>
-      <p><a class="btn" href="../index.html">Back Home</a></p>
-    </div>
+      <p class="eyebrow">Join Smart House Hunt</p>
+
+      <label for="name">Full name</label>
+      <input id="name" name="name" type="text" placeholder="Jane Doe" required>
+
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" placeholder="jane@example.com" required>
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" placeholder="At least 6 characters" minlength="6" required>
+
+      <label for="role">I am a...</label>
+      <select id="role" name="role">
+        <option value="tenant">Tenant (looking for a house)</option>
+        <option value="landlord">Landlord (listing houses)</option>
+        <option value="agent">Agent</option>
+      </select>
+
+      <p class="form-message" id="form-message"></p>
+
+      <button class="btn" type="submit">Create account</button>
+      <p class="auth-link">Already have an account? <a href="login.html">Log in</a></p>
+      <p><a href="../index.html">Back Home</a></p>
+    </form>
   </main>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script>
+    const form = document.getElementById("register-form");
+    const message = document.getElementById("form-message");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      message.textContent = "";
+      message.className = "form-message";
+
+      const userData = {
+        name: form.name.value.trim(),
+        email: form.email.value.trim(),
+        password: form.password.value,
+        role: form.role.value
+      };
+
+      try {
+        await registerUser(userData);
+        message.textContent = "Account created! Redirecting to login...";
+        message.className = "form-message success";
+        setTimeout(() => { window.location.href = "login.html"; }, 1200);
+      } catch (error) {
+        message.textContent = error.message;
+        message.className = "form-message error";
+      }
+    });
+  </script>
 </body>
 </html>

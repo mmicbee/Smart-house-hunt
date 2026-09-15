@@ -8,10 +8,28 @@ type Repository struct {
 	db *sql.DB 
 }
 
-func Newrepository(db *sql.DB) * Repository {
+func NewRepository(db *sql.DB) *Repository {
 	return &Repository{
 		db: db,
 	}
+}
+
+func (r *Repository) RoleIDByName(name string) (int64, error) {
+	var id int64
+	err := r.db.QueryRow("SELECT id FROM roles WHERE name = ?", name).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+func (r *Repository) RoleByID(id int64) (string, error) {
+	var name string
+	err := r.db.QueryRow("SELECT name FROM roles WHERE id = ?", id).Scan(&name)
+	if err != nil {
+		return "", err
+	}
+	return name, nil
 }
 
 func (r *Repository) Create(user *User) error {
