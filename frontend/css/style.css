@@ -145,13 +145,21 @@ h1 {
 }
 
 .auth-card input,
-.auth-card select {
+.auth-card select,
+.auth-card textarea {
   width: 100%;
   padding: 11px 14px;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   font-size: 1rem;
+  font-family: inherit;
   background: #ffffff;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 .auth-card button {

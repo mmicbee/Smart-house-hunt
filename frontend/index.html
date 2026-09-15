@@ -59,6 +59,14 @@
       });
       authArea.appendChild(greeting);
       authArea.appendChild(logoutLink);
+
+      if (user.role === "landlord") {
+        const listLink = document.createElement("a");
+        listLink.href = "pages/create-property.html";
+        listLink.textContent = "List a House";
+        authArea.appendChild(document.createTextNode(" "));
+        authArea.appendChild(listLink);
+      }
     } else {
       const loginLink = document.createElement("a");
       loginLink.href = "pages/login.html";

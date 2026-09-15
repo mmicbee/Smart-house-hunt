@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>List a house - Smart House Hunt</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <main class="container auth-page">
+    <form class="auth-card" id="property-form">
+      <h1>List a house</h1>
+      <p class="eyebrow">Create a new property listing</p>
+
+      <label for="title">Title</label>
+      <input id="title" name="title" type="text" placeholder="2-bedroom apartment near town" required>
+
+      <label for="description">Description</label>
+      <textarea id="description" name="description" rows="4" placeholder="Describe the house, fittings, and surroundings" required></textarea>
+
+      <label for="location">Location</label>
+      <input id="location" name="location" type="text" placeholder="e.g. Kakamega" required>
+
+      <label for="price">Monthly rent (KES)</label>
+      <input id="price" name="price" type="number" min="1" step="1" placeholder="15000" required>
+
+      <div class="field-row">
+        <div>
+          <label for="bedrooms">Bedrooms</label>
+          <input id="bedrooms" name="bedrooms" type="number" min="0" value="1">
+        </div>
+        <div>
+          <label for="bathrooms">Bathrooms</label>
+          <input id="bathrooms" name="bathrooms" type="number" min="0" value="1">
+        </div>
+      </div>
+
+      <label for="amenities">Amenities (comma-separated)</label>
+      <input id="amenities" name="amenities" type="text" placeholder="e.g. parking, water, gated community">
+
+      <p class="form-message" id="form-message"></p>
+
+      <button class="btn" type="submit">Create listing</button>
+      <p><a href="../index.html">Back Home</a></p>
+    </form>
+  </main>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/properties.js"></script>
+  <script>
+    const user = getCurrentUser();
+    if (!user || user.role !== "landlord") {
+      window.location.href = "../pages/login.html";
+    }
+
+    const form = document.getElementById("property-form");
+    const message = document.getElementById("form-message");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      message.textContent = "";
+      message.className = "form-message";
+
+      const propertyData = {
+        title: form.title.value.trim(),
+        description: form.description.value.trim(),
+        location: form.location.value.trim(),
+        price: parseInt(form.price.value, 10),
+        bedrooms: parseInt(form.bedrooms.value || "0", 10),
+        bathrooms: parseInt(form.bathrooms.value || "0", 10),
+        amenities: form.amenities.value.trim()
+      };
+
+      try {
+        const property = await createProperty(propertyData);
+        message.textContent = `Listing "${property.title}" created and sent for review.`;
+        message.className = "form-message success";
+        form.reset();
+      } catch (error) {
+        message.textContent = error.message;
+        message.className = "form-message error";
+      }
+    });
+  </script>
+</body>
+</html>
