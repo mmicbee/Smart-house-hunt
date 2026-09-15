@@ -207,8 +207,8 @@ returns:
 - [x] User registration
 - [x] User login
 - [x] Password hashing
-- [ ] JWT generation
-- [ ] JWT validation middleware
+- [x] JWT generation
+- [x] JWT validation middleware
 - [ ] Logout
 - [ ] Protected routes
 - [ ] Role-based authorization
