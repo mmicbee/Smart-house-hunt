@@ -233,7 +233,7 @@ A user can register, log in, receive a JWT, and access protected endpoints accor
 ### Landlord
 
 - [x] Create property
-- [ ] Edit property
+- [x] Edit property
 - [ ] Delete property
 - [ ] Upload property images
 - [ ] View own listings

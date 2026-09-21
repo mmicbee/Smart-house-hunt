@@ -64,3 +64,29 @@ func (r *Repository) FindByID(id int64) (*Property, error) {
 
 	return property, nil
 }
+
+func (r *Repository) Update(property *Property) error {
+	query := `
+		UPDATE properties
+		SET title = ?, description = ?, location = ?, price = ?,
+			bedrooms = ?, bathrooms = ?, amenities = ?, updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?
+		RETURNING status, created_at, updated_at
+	`
+
+	return r.db.QueryRow(
+		query,
+		property.Title,
+		property.Description,
+		property.Location,
+		property.Price,
+		property.Bedrooms,
+		property.Bathrooms,
+		property.Amenities,
+		property.ID,
+	).Scan(
+		&property.Status,
+		&property.CreatedAt,
+		&property.UpdatedAt,
+	)
+}
