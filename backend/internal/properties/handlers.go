@@ -3,9 +3,14 @@ package properties
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -133,6 +138,83 @@ func (h *Handler) Delete(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "property deleted"})
+}
+
+const maxImageSize = 5 << 20
+
+func (h *Handler) UploadImage(c *gin.Context) {
+	landlordID := c.GetInt64(middleware.ContextUserID)
+
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid property id"})
+		return
+	}
+
+	property, err := h.repo.FindByID(id)
+	if errors.Is(err, sql.ErrNoRows) {
+		c.JSON(http.StatusNotFound, gin.H{"message": "property not found"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not load property"})
+		return
+	}
+	if property.LandlordID != landlordID {
+		c.JSON(http.StatusForbidden, gin.H{"message": "you can only add images to your own listings"})
+		return
+	}
+
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxImageSize)
+
+	file, header, err := c.Request.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "an image file is required"})
+		return
+	}
+	defer file.Close()
+
+	ext := strings.ToLower(filepath.Ext(header.Filename))
+	switch ext {
+	case ".jpg", ".jpeg", ".png", ".webp", ".gif":
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"message": "only jpg, jpeg, png, webp, or gif images are supported"})
+		return
+	}
+
+	dir := filepath.Join("storage", "property-images", strconv.FormatInt(id, 10))
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not create image directory"})
+		return
+	}
+
+	filename := fmt.Sprintf("image_%d%s", time.Now().UnixNano(), ext)
+	dest := filepath.Join(dir, filename)
+
+	out, err := os.Create(dest)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not save image"})
+		return
+	}
+	defer out.Close()
+
+	if _, err := io.Copy(out, file); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not write image"})
+		return
+	}
+
+	image := &PropertyImage{
+		PropertyID: id,
+		FilePath: filepath.ToSlash(filepath.Join(
+			"uploads", "property-images", strconv.FormatInt(id, 10), filename,
+		)),
+	}
+	if err := h.repo.AddImage(image); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not record image"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, image)
 }
 
 func validateRequest(req *PropertyRequest) string {

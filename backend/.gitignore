@@ -2,3 +2,5 @@ smart-house-hunt.db
 .env
 .env.*
 !/.env.example
+storage/property-images/*
+!storage/property-images/.gitkeep

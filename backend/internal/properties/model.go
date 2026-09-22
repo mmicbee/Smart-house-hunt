@@ -16,3 +16,10 @@ type Property struct {
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
+
+type PropertyImage struct {
+	ID         int64     `json:"id"`
+	PropertyID int64     `json:"property_id"`
+	FilePath   string    `json:"file_path"`
+	CreatedAt  time.Time `json:"created_at"`
+}

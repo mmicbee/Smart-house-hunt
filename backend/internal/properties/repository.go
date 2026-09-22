@@ -95,3 +95,16 @@ func (r *Repository) Delete(id int64) error {
 	_, err := r.db.Exec("DELETE FROM properties WHERE id = ?", id)
 	return err
 }
+
+func (r *Repository) AddImage(image *PropertyImage) error {
+	query := `
+		INSERT INTO property_images (property_id, file_path)
+		VALUES (?, ?)
+		RETURNING id, created_at
+	`
+
+	return r.db.QueryRow(query, image.PropertyID, image.FilePath).Scan(
+		&image.ID,
+		&image.CreatedAt,
+	)
+}

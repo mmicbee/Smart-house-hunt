@@ -14,6 +14,7 @@ import (
 
 func Setup(router *gin.Engine, db *sql.DB, cfg *config.Config) {
 	router.Use(middleware.CORS())
+	router.Static("/uploads", "storage")
 
 	usersRepo := users.NewRepository(db)
 	authHandler := auth.NewAuthHandler(usersRepo, cfg.JWTSecret)
