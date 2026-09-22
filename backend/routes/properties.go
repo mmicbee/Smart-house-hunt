@@ -21,5 +21,6 @@ func SetupPropertyRoutes(api *gin.RouterGroup, db *sql.DB, cfg *config.Config) {
 	{
 		landlordAPI.POST("", handler.Create)
 		landlordAPI.PUT("/:id", handler.Update)
+		landlordAPI.DELETE("/:id", handler.Delete)
 	}
 }

@@ -234,7 +234,7 @@ A user can register, log in, receive a JWT, and access protected endpoints accor
 
 - [x] Create property
 - [x] Edit property
-- [ ] Delete property
+- [x] Delete property
 - [ ] Upload property images
 - [ ] View own listings
 

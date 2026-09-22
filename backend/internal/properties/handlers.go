@@ -104,6 +104,37 @@ func (h *Handler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, toResponse(property))
 }
 
+func (h *Handler) Delete(c *gin.Context) {
+	landlordID := c.GetInt64(middleware.ContextUserID)
+
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid property id"})
+		return
+	}
+
+	property, err := h.repo.FindByID(id)
+	if errors.Is(err, sql.ErrNoRows) {
+		c.JSON(http.StatusNotFound, gin.H{"message": "property not found"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not load property"})
+		return
+	}
+	if property.LandlordID != landlordID {
+		c.JSON(http.StatusForbidden, gin.H{"message": "you can only delete your own listings"})
+		return
+	}
+
+	if err := h.repo.Delete(id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not delete property"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "property deleted"})
+}
+
 func validateRequest(req *PropertyRequest) string {
 	req.Title = strings.TrimSpace(req.Title)
 	req.Description = strings.TrimSpace(req.Description)

@@ -90,3 +90,8 @@ func (r *Repository) Update(property *Property) error {
 		&property.UpdatedAt,
 	)
 }
+
+func (r *Repository) Delete(id int64) error {
+	_, err := r.db.Exec("DELETE FROM properties WHERE id = ?", id)
+	return err
+}
