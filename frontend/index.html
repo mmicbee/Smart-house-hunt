@@ -64,8 +64,13 @@
         const listLink = document.createElement("a");
         listLink.href = "pages/create-property.html";
         listLink.textContent = "List a House";
+        const mineLink = document.createElement("a");
+        mineLink.href = "pages/my-listings.html";
+        mineLink.textContent = "My Listings";
         authArea.appendChild(document.createTextNode(" "));
         authArea.appendChild(listLink);
+        authArea.appendChild(document.createTextNode(" "));
+        authArea.appendChild(mineLink);
       }
     } else {
       const loginLink = document.createElement("a");
