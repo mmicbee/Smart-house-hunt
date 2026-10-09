@@ -240,8 +240,8 @@ A user can register, log in, receive a JWT, and access protected endpoints accor
 
 ### Tenant
 
-- [ ] View approved properties
-- [ ] View property details
+- [x] View approved properties
+- [x] View property details
 
 ### Property status
 
@@ -597,20 +597,14 @@ Once the foundation is stable, advanced technologies can be introduced where the
 
 # Current Status
 
-**Milestone 2 — Property Listings**
+**Milestone 2 (Property Listings) is complete.**
 
-Milestone 1 (Authentication) is complete: users can register, log in,
-receive a JWT, log out, and access protected endpoints. Passwords are
-bcrypt-hashed, JWTs are validated by middleware, and role-based
-authorization gates admin-only routes.
-
-Landlords can create, edit, delete properties, upload property images,
-and view their own listings.
+- Authentication (Milestone 1): users can register, log in, receive a JWT, log out, and access protected endpoints. Passwords are bcrypt-hashed, JWTs are validated by middleware, and role-based authorization gates routes by role.
+- Property Listings (Milestone 2): landlords can create, edit, delete listings, upload property images, and view their own listings. Tenants can browse approved listings and view detailed property information and photos.
 
 Next development target:
 
-1. Tenant — view approved properties
-2. Tenant — view property details
+**Milestone 3 — Search and Favorites**
 
 ---
 
