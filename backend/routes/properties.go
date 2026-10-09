@@ -14,6 +14,8 @@ func SetupPropertyRoutes(api *gin.RouterGroup, db *sql.DB, cfg *config.Config) {
 	repo := properties.NewRepository(db)
 	handler := properties.NewHandler(repo)
 
+	api.GET("/properties", handler.ListApproved)
+
 	landlordAPI := api.Group("/properties",
 		middleware.RequireAuth(cfg.JWTSecret),
 		middleware.RequireRole("landlord"),

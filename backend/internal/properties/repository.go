@@ -79,7 +79,44 @@ func (r *Repository) ListByLandlord(landlordID int64) ([]Property, error) {
 	}
 	defer rows.Close()
 
-	var list []Property
+	list := make([]Property, 0)
+	for rows.Next() {
+		var property Property
+		if err := rows.Scan(
+			&property.ID,
+			&property.LandlordID,
+			&property.Title,
+			&property.Description,
+			&property.Location,
+			&property.Price,
+			&property.Bedrooms,
+			&property.Bathrooms,
+			&property.Amenities,
+			&property.Status,
+			&property.CreatedAt,
+			&property.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		list = append(list, property)
+	}
+
+	return list, rows.Err()
+}
+
+func (r *Repository) ListApproved() ([]Property, error) {
+	rows, err := r.db.Query(`
+		SELECT `+propertyColumns+`
+		FROM properties
+		WHERE status = 'approved'
+		ORDER BY id DESC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	list := make([]Property, 0)
 	for rows.Next() {
 		var property Property
 		if err := rows.Scan(
@@ -116,7 +153,7 @@ func (r *Repository) ListImagesByProperty(propertyID int64) ([]PropertyImage, er
 	}
 	defer rows.Close()
 
-	var list []PropertyImage
+	list := make([]PropertyImage, 0)
 	for rows.Next() {
 		var image PropertyImage
 		if err := rows.Scan(&image.ID, &image.PropertyID, &image.FilePath, &image.CreatedAt); err != nil {

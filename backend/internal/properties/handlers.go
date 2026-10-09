@@ -239,6 +239,26 @@ func (h *Handler) Mine(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"properties": items})
 }
 
+func (h *Handler) ListApproved(c *gin.Context) {
+	list, err := h.repo.ListApproved()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not load properties"})
+		return
+	}
+
+	items := make([]PropertyListItem, 0, len(list))
+	for _, property := range list {
+		images, err := h.repo.ListImagesByProperty(property.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "could not load property images"})
+			return
+		}
+		items = append(items, PropertyListItem{Property: property, Images: images})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"properties": items})
+}
+
 func validateRequest(req *PropertyRequest) string {
 	req.Title = strings.TrimSpace(req.Title)
 	req.Description = strings.TrimSpace(req.Description)
