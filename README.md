@@ -236,7 +236,7 @@ A user can register, log in, receive a JWT, and access protected endpoints accor
 - [x] Edit property
 - [x] Delete property
 - [x] Upload property images
-- [ ] View own listings
+- [x] View own listings
 
 ### Tenant
 
@@ -604,15 +604,13 @@ receive a JWT, log out, and access protected endpoints. Passwords are
 bcrypt-hashed, JWTs are validated by middleware, and role-based
 authorization gates admin-only routes.
 
+Landlords can create, edit, delete properties, upload property images,
+and view their own listings.
+
 Next development target:
 
-1. Landlord — create property
-2. Landlord — edit property
-3. Landlord — delete property
-4. Landlord — upload property images
-5. Landlord — view own listings
-6. Tenant — view approved properties
-7. Tenant — view property details
+1. Tenant — view approved properties
+2. Tenant — view property details
 
 ---
 
