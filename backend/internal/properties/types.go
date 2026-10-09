@@ -25,6 +25,11 @@ type PropertyResponse struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
+type PropertyListItem struct {
+	Property
+	Images []PropertyImage `json:"images"`
+}
+
 func toResponse(property *Property) PropertyResponse {
 	return PropertyResponse{
 		ID:          property.ID,

@@ -20,6 +20,7 @@ func SetupPropertyRoutes(api *gin.RouterGroup, db *sql.DB, cfg *config.Config) {
 	)
 	{
 		landlordAPI.POST("", handler.Create)
+		landlordAPI.GET("/mine", handler.Mine)
 		landlordAPI.PUT("/:id", handler.Update)
 		landlordAPI.DELETE("/:id", handler.Delete)
 		landlordAPI.POST("/:id/images", handler.UploadImage)

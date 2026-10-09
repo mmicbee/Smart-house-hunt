@@ -6,6 +6,8 @@ type Repository struct {
 	db *sql.DB
 }
 
+const propertyColumns = "id, landlord_id, title, description, location, price, bedrooms, bathrooms, amenities, status, created_at, updated_at"
+
 func NewRepository(db *sql.DB) *Repository {
 	return &Repository{db: db}
 }
@@ -38,7 +40,7 @@ func (r *Repository) Create(property *Property) error {
 
 func (r *Repository) FindByID(id int64) (*Property, error) {
 	query := `
-		SELECT id, landlord_id, title, description, location, price, bedrooms, bathrooms, amenities, status, created_at, updated_at
+		SELECT ` + propertyColumns + `
 		FROM properties
 		WHERE id = ?
 	`
@@ -63,6 +65,67 @@ func (r *Repository) FindByID(id int64) (*Property, error) {
 	}
 
 	return property, nil
+}
+
+func (r *Repository) ListByLandlord(landlordID int64) ([]Property, error) {
+	rows, err := r.db.Query(`
+		SELECT `+propertyColumns+`
+		FROM properties
+		WHERE landlord_id = ?
+		ORDER BY id DESC
+	`, landlordID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []Property
+	for rows.Next() {
+		var property Property
+		if err := rows.Scan(
+			&property.ID,
+			&property.LandlordID,
+			&property.Title,
+			&property.Description,
+			&property.Location,
+			&property.Price,
+			&property.Bedrooms,
+			&property.Bathrooms,
+			&property.Amenities,
+			&property.Status,
+			&property.CreatedAt,
+			&property.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		list = append(list, property)
+	}
+
+	return list, rows.Err()
+}
+
+func (r *Repository) ListImagesByProperty(propertyID int64) ([]PropertyImage, error) {
+	rows, err := r.db.Query(`
+		SELECT id, property_id, file_path, created_at
+		FROM property_images
+		WHERE property_id = ?
+		ORDER BY id
+	`, propertyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []PropertyImage
+	for rows.Next() {
+		var image PropertyImage
+		if err := rows.Scan(&image.ID, &image.PropertyID, &image.FilePath, &image.CreatedAt); err != nil {
+			return nil, err
+		}
+		list = append(list, image)
+	}
+
+	return list, rows.Err()
 }
 
 func (r *Repository) Update(property *Property) error {
