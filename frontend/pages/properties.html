@@ -43,15 +43,21 @@
       card.className = "listing-card";
 
       if (property.images && property.images.length > 0) {
+        const imgLink = document.createElement("a");
+        imgLink.href = `property-details.html?id=${property.id}`;
         const img = document.createElement("img");
         img.src = `${API_BASE_URL.replace("/api", "")}/${property.images[0].file_path}`;
         img.alt = property.title;
         img.className = "listing-card-img";
-        card.appendChild(img);
+        imgLink.appendChild(img);
+        card.appendChild(imgLink);
       }
 
       const title = document.createElement("h2");
-      title.textContent = property.title;
+      const titleLink = document.createElement("a");
+      titleLink.href = `property-details.html?id=${property.id}`;
+      titleLink.textContent = property.title;
+      title.appendChild(titleLink);
       card.appendChild(title);
 
       const location = document.createElement("p");
@@ -68,6 +74,12 @@
       details.className = "listing-meta";
       details.textContent = `${property.bedrooms} bed, ${property.bathrooms} bath`;
       card.appendChild(details);
+
+      const viewLink = document.createElement("a");
+      viewLink.className = "btn";
+      viewLink.href = `property-details.html?id=${property.id}`;
+      viewLink.textContent = "View Details";
+      card.appendChild(viewLink);
 
       return card;
     }

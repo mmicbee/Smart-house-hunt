@@ -259,6 +259,35 @@ func (h *Handler) ListApproved(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"properties": items})
 }
 
+func (h *Handler) GetApproved(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid property id"})
+		return
+	}
+
+	property, err := h.repo.FindByID(id)
+	if errors.Is(err, sql.ErrNoRows) || (property != nil && property.Status != "approved") {
+		c.JSON(http.StatusNotFound, gin.H{"message": "property not found"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not load property"})
+		return
+	}
+
+	images, err := h.repo.ListImagesByProperty(property.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not load property images"})
+		return
+	}
+
+	c.JSON(http.StatusOK, PropertyListItem{
+		Property: *property,
+		Images:   images,
+	})
+}
+
 func validateRequest(req *PropertyRequest) string {
 	req.Title = strings.TrimSpace(req.Title)
 	req.Description = strings.TrimSpace(req.Description)

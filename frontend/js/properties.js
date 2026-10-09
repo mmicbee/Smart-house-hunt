@@ -26,3 +26,8 @@ async function uploadPropertyImage(id, file) {
 async function loadProperties() {
   return apiRequest("/properties");
 }
+
+async function getProperty(id) {
+  return apiRequest(`/properties/${id}`);
+}
+

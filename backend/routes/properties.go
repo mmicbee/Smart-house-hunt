@@ -27,4 +27,6 @@ func SetupPropertyRoutes(api *gin.RouterGroup, db *sql.DB, cfg *config.Config) {
 		landlordAPI.DELETE("/:id", handler.Delete)
 		landlordAPI.POST("/:id/images", handler.UploadImage)
 	}
+
+	api.GET("/properties/:id", handler.GetApproved)
 }
