@@ -3,14 +3,27 @@ package database
 import (
 	"database/sql"
 	"os"
+	"path/filepath"
+	"sort"
 )
 
 func RunMigrations(db *sql.DB) error {
-	sqlFile, err := os.ReadFile("database/migrations/001_initial.sql")
+	files, err := filepath.Glob("database/migrations/*.sql")
 	if err != nil {
 		return err
 	}
+	sort.Strings(files)
 
-	_, err = db.Exec(string(sqlFile))
-	return err
+	for _, file := range files {
+		content, err := os.ReadFile(file)
+		if err != nil {
+			return err
+		}
+
+		if _, err := db.Exec(string(content)); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

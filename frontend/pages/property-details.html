@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Property Details - Smart House Hunt</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="../index.html">Smart House Hunt</a>
+      <nav>
+        <a href="properties.html">Find a House</a>
+        <a href="../index.html">Home</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="page-head">
+      <a class="btn secondary" href="properties.html">&larr; Back to Houses</a>
+    </div>
+
+    <p class="form-message" id="message"></p>
+
+    <div id="property-container" class="hidden">
+      <div class="property-details-card">
+        <h1 id="prop-title"></h1>
+        <p class="listing-meta" id="prop-location"></p>
+        <p class="property-details-price" id="prop-price"></p>
+
+        <div id="prop-images" class="details-images"></div>
+
+        <div class="property-features">
+          <div class="feature-item">
+            <span class="feature-label">Bedrooms</span>
+            <span class="feature-value" id="prop-bedrooms"></span>
+          </div>
+          <div class="feature-item">
+            <span class="feature-label">Bathrooms</span>
+            <span class="feature-value" id="prop-bathrooms"></span>
+          </div>
+          <div class="feature-item">
+            <span class="feature-label">Status</span>
+            <span class="feature-value badge badge-approved" id="prop-status"></span>
+          </div>
+        </div>
+
+        <h3>Description</h3>
+        <p class="property-description" id="prop-description"></p>
+
+        <div id="amenities-section">
+          <h3>Amenities</h3>
+          <div id="prop-amenities"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/properties.js"></script>
+  <script>
+    const messageEl = document.getElementById("message");
+    const containerEl = document.getElementById("property-container");
+
+    function showMessage(text, ok) {
+      messageEl.textContent = text;
+      messageEl.className = ok ? "form-message success" : "form-message error";
+    }
+
+    async function loadDetails() {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+
+      if (!id) {
+        showMessage("Property ID is missing.", false);
+        return;
+      }
+
+      try {
+        const property = await getProperty(id);
+        document.title = `${property.title} - Smart House Hunt`;
+
+        document.getElementById("prop-title").textContent = property.title;
+        document.getElementById("prop-location").textContent = property.location;
+        document.getElementById("prop-price").textContent = `KES ${property.price.toLocaleString()} / month`;
+        document.getElementById("prop-bedrooms").textContent = property.bedrooms;
+        document.getElementById("prop-bathrooms").textContent = property.bathrooms;
+        document.getElementById("prop-status").textContent = property.status;
+        document.getElementById("prop-description").textContent = property.description;
+
+        const imagesEl = document.getElementById("prop-images");
+        imagesEl.innerHTML = "";
+        const images = property.images || [];
+        images.forEach((img) => {
+          const imgEl = document.createElement("img");
+          imgEl.src = `${API_BASE_URL.replace("/api", "")}/${img.file_path}`;
+          imgEl.alt = property.title;
+          imagesEl.appendChild(imgEl);
+        });
+        if (images.length === 0) {
+          imagesEl.style.display = "none";
+        }
+
+        const amenitiesEl = document.getElementById("prop-amenities");
+        amenitiesEl.innerHTML = "";
+        if (property.amenities && property.amenities.trim() !== "") {
+          const items = property.amenities.split(",").map((s) => s.trim()).filter(Boolean);
+          items.forEach((item) => {
+            const span = document.createElement("span");
+            span.className = "amenity-tag";
+            span.textContent = item;
+            amenitiesEl.appendChild(span);
+          });
+        } else {
+          document.getElementById("amenities-section").style.display = "none";
+        }
+
+        containerEl.classList.remove("hidden");
+      } catch (error) {
+        showMessage(error.message || "Property not found.", false);
+      }
+    }
+
+    loadDetails();
+  </script>
+</body>
+</html>

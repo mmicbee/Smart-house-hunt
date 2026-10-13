@@ -3,18 +3,102 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Properties - Smart House Hunt</title>
+  <title>Available Houses - Smart House Hunt</title>
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
-  <main class="container hero">
-    <div>
-      <h1>Available Houses</h1>
-      <p>Property search and filtering will be implemented in Milestone 3.</p>
-      <p><a class="btn" href="../index.html">Back Home</a></p>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="../index.html">Smart House Hunt</a>
+      <nav>
+        <a href="properties.html">Find a House</a>
+        <a href="../index.html">Home</a>
+      </nav>
     </div>
+  </header>
+
+  <main class="container page">
+    <div class="page-head">
+      <h1>Available Houses</h1>
+      <a class="btn secondary" href="../index.html">Back Home</a>
+    </div>
+    <p class="form-message" id="message"></p>
+    <div id="listings" class="listing-grid"></div>
+    <p id="empty" class="empty hidden">No houses currently available.</p>
   </main>
   <script src="../js/api.js"></script>
   <script src="../js/properties.js"></script>
+  <script>
+    const listingsEl = document.getElementById("listings");
+    const emptyEl = document.getElementById("empty");
+    const message = document.getElementById("message");
+
+    function showMessage(text, ok) {
+      message.textContent = text;
+      message.className = ok ? "form-message success" : "form-message error";
+    }
+
+    function propertyCard(property) {
+      const card = document.createElement("div");
+      card.className = "listing-card";
+
+      if (property.images && property.images.length > 0) {
+        const imgLink = document.createElement("a");
+        imgLink.href = `property-details.html?id=${property.id}`;
+        const img = document.createElement("img");
+        img.src = `${API_BASE_URL.replace("/api", "")}/${property.images[0].file_path}`;
+        img.alt = property.title;
+        img.className = "listing-card-img";
+        imgLink.appendChild(img);
+        card.appendChild(imgLink);
+      }
+
+      const title = document.createElement("h2");
+      const titleLink = document.createElement("a");
+      titleLink.href = `property-details.html?id=${property.id}`;
+      titleLink.textContent = property.title;
+      title.appendChild(titleLink);
+      card.appendChild(title);
+
+      const location = document.createElement("p");
+      location.className = "listing-meta";
+      location.textContent = property.location;
+      card.appendChild(location);
+
+      const price = document.createElement("p");
+      price.className = "listing-price";
+      price.textContent = `KES ${property.price.toLocaleString()} / month`;
+      card.appendChild(price);
+
+      const details = document.createElement("p");
+      details.className = "listing-meta";
+      details.textContent = `${property.bedrooms} bed, ${property.bathrooms} bath`;
+      card.appendChild(details);
+
+      const viewLink = document.createElement("a");
+      viewLink.className = "btn";
+      viewLink.href = `property-details.html?id=${property.id}`;
+      viewLink.textContent = "View Details";
+      card.appendChild(viewLink);
+
+      return card;
+    }
+
+    async function load() {
+      try {
+        const data = await loadProperties();
+        listingsEl.innerHTML = "";
+        const properties = (data && data.properties) || [];
+        emptyEl.classList.toggle("hidden", properties.length > 0);
+        properties.forEach((property) => {
+          listingsEl.appendChild(propertyCard(property));
+        });
+      } catch (error) {
+        showMessage(error.message, false);
+      }
+    }
+
+    load();
+  </script>
 </body>
 </html>

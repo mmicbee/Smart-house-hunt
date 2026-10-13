@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Listings - Smart House Hunt</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <main class="container page">
+    <div class="page-head">
+      <h1>My Listings</h1>
+      <a class="btn" href="create-property.html">List a House</a>
+    </div>
+    <p class="form-message" id="message"></p>
+    <div id="listings" class="listing-grid"></div>
+    <p id="empty" class="empty hidden">You have not listed any houses yet.</p>
+  </main>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/properties.js"></script>
+  <script>
+    const user = getCurrentUser();
+    if (!user || user.role !== "landlord") {
+      window.location.href = "login.html";
+    }
+
+    const listingsEl = document.getElementById("listings");
+    const emptyEl = document.getElementById("empty");
+    const message = document.getElementById("message");
+
+    function showMessage(text, ok) {
+      message.textContent = text;
+      message.className = ok ? "form-message success" : "form-message error";
+    }
+
+    function propertyCard(property) {
+      const card = document.createElement("div");
+      card.className = "listing-card";
+
+      const body = document.createElement("div");
+      const title = document.createElement("h2");
+      title.textContent = property.title;
+      const meta = document.createElement("p");
+      meta.className = "listing-meta";
+      meta.textContent = `${property.location} - KES ${property.price.toLocaleString()} / month - ${property.bedrooms} bed, ${property.bathrooms} bath`;
+      const status = document.createElement("span");
+      status.className = `badge badge-${property.status}`;
+      status.textContent = property.status;
+
+      const imgWrap = document.createElement("div");
+      imgWrap.className = "listing-images";
+      (property.images || []).forEach((image) => {
+        const img = document.createElement("img");
+        img.src = `${API_BASE_URL.replace("/api", "")}/${image.file_path}`;
+        img.alt = property.title;
+        img.className = "listing-thumb";
+        imgWrap.appendChild(img);
+      });
+
+      const uploadLabel = document.createElement("label");
+      uploadLabel.className = "btn secondary";
+      uploadLabel.textContent = "Add image";
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = "image/*";
+      fileInput.hidden = true;
+      fileInput.addEventListener("change", async () => {
+        if (!fileInput.files[0]) return;
+        try {
+          await uploadPropertyImage(property.id, fileInput.files[0]);
+          showMessage("Image uploaded.", true);
+          load();
+        } catch (error) {
+          showMessage(error.message, false);
+        }
+      });
+      uploadLabel.appendChild(fileInput);
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "btn danger";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.addEventListener("click", async () => {
+        if (!window.confirm(`Delete "${property.title}"?`)) return;
+        try {
+          await deleteProperty(property.id);
+          showMessage("Listing deleted.", true);
+          load();
+        } catch (error) {
+          showMessage(error.message, false);
+        }
+      });
+
+      body.appendChild(title);
+      body.appendChild(meta);
+      body.appendChild(status);
+      body.appendChild(imgWrap);
+      body.appendChild(uploadLabel);
+      body.appendChild(deleteBtn);
+      card.appendChild(body);
+      return card;
+    }
+
+    async function load() {
+      try {
+        const data = await listMyProperties();
+        listingsEl.innerHTML = "";
+        emptyEl.classList.toggle("hidden", data.properties.length > 0);
+        data.properties.forEach((property) => {
+          listingsEl.appendChild(propertyCard(property));
+        });
+      } catch (error) {
+        showMessage(error.message, false);
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

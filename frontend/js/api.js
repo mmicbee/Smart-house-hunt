@@ -3,10 +3,9 @@ const API_BASE_URL = "http://localhost:8080/api";
 async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem("token");
 
-  const headers = {
-    "Content-Type": "application/json",
-    ...(options.headers || {})
-  };
+  const headers = options.headers
+    ? { ...options.headers }
+    : { "Content-Type": "application/json" };
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;

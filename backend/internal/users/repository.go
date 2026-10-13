@@ -8,10 +8,58 @@ type Repository struct {
 	db *sql.DB 
 }
 
-func Newrepository(db *sql.DB) * Repository {
+func NewRepository(db *sql.DB) *Repository {
 	return &Repository{
 		db: db,
 	}
+}
+
+func (r *Repository) RoleIDByName(name string) (int64, error) {
+	var id int64
+	err := r.db.QueryRow("SELECT id FROM roles WHERE name = ?", name).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+func (r *Repository) RoleByID(id int64) (string, error) {
+	var name string
+	err := r.db.QueryRow("SELECT name FROM roles WHERE id = ?", id).Scan(&name)
+	if err != nil {
+		return "", err
+	}
+	return name, nil
+}
+
+func (r *Repository) List() ([]User, error) {
+	rows, err := r.db.Query(`
+		SELECT id, role_id, name, email, created_at, updated_at
+		FROM users
+		ORDER BY id
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var all []User
+	for rows.Next() {
+		var user User
+		if err := rows.Scan(
+			&user.ID,
+			&user.RoleID,
+			&user.Name,
+			&user.Email,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		all = append(all, user)
+	}
+
+	return all, rows.Err()
 }
 
 func (r *Repository) Create(user *User) error {
@@ -30,11 +78,11 @@ func (r *Repository) Create(user *User) error {
 	).Scan(
 		&user.ID,
 		&user.CreatedAt,
-		&user.UPdatedAt,
+		&user.UpdatedAt,
 	)
 }
 
-func (r *Repository) FindByEmail(email string) (*user, error) {
+func (r *Repository) FindByEmail(email string) (*User, error) {
 	query := `
 	SELECT id, role_id, name, email, password, created_at, updated_at
 	FROM users

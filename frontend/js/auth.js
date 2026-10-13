@@ -8,10 +8,29 @@ function saveAuth(data) {
   }
 }
 
-function logout() {
+async function registerUser(userData) {
+  return apiRequest("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(userData)
+  });
+}
+
+async function loginUser(credentials) {
+  return apiRequest("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(credentials)
+  });
+}
+
+async function logout() {
+  try {
+    await apiRequest("/auth/logout", { method: "POST" });
+  } catch (error) {
+    // the local session is discarded even if the server is unreachable
+  }
   localStorage.removeItem("token");
   localStorage.removeItem("user");
-  window.location.href = "login.html";
+  window.location.href = "pages/login.html";
 }
 
 function getCurrentUser() {

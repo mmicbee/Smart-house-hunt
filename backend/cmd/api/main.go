@@ -2,14 +2,17 @@ package main
 
 import (
 	"log"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 
+	"smart-house-hunt/config"
 	"smart-house-hunt/database"
+	"smart-house-hunt/routes"
 )
 
 func main() {
+	cfg := config.Load()
+
 	db, err := database.Connect()
 	if err != nil {
 		log.Fatal("failed to connect to database:", err)
@@ -20,20 +23,14 @@ func main() {
 		log.Fatal("failed to run migrations:", err)
 	}
 
-	r := gin.Default()
-
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  "ok",
-			"message": "Smart House Hunt API is running",
-		})
-	})
+	router := gin.Default()
+	routes.Setup(router, db, cfg)
 
 	log.Println("Database: SQLite 3")
 	log.Println("Migrations: completed")
-	log.Println("Server starting on :8080")
+	log.Println("Server starting on", cfg.Port)
 
-	if err := r.Run(":8080"); err != nil {
+	if err := router.Run(cfg.Port); err != nil {
 		log.Fatal(err)
 	}
 }

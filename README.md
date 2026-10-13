@@ -169,15 +169,15 @@ The project will be developed incrementally. Each milestone should be working be
 
 Tasks:
 
-- [ ] Set up project structure
-- [ ] Initialize Go module
-- [ ] Install backend dependencies
-- [ ] Connect Go to SQLite 3
-- [ ] Create basic HTTP server
-- [ ] Create health-check endpoint
-- [ ] Create frontend base pages
-- [ ] Connect frontend to backend
-- [ ] Set up Git branches and commits
+- [x] Set up project structure
+- [x] Initialize Go module
+- [x] Install backend dependencies
+- [x] Connect Go to SQLite 3
+- [x] Create basic HTTP server
+- [x] Create health-check endpoint
+- [x] Create frontend base pages
+- [x] Connect frontend to backend
+- [x] Set up Git branches and commits
 
 ### Expected result
 
@@ -204,14 +204,14 @@ returns:
 
 ### Features
 
-- [ ] User registration
-- [ ] User login
-- [ ] Password hashing
-- [ ] JWT generation
-- [ ] JWT validation middleware
-- [ ] Logout
-- [ ] Protected routes
-- [ ] Role-based authorization
+- [x] User registration
+- [x] User login
+- [x] Password hashing
+- [x] JWT generation
+- [x] JWT validation middleware
+- [x] Logout
+- [x] Protected routes
+- [x] Role-based authorization
 
 ### Roles
 
@@ -232,16 +232,16 @@ A user can register, log in, receive a JWT, and access protected endpoints accor
 
 ### Landlord
 
-- [ ] Create property
-- [ ] Edit property
-- [ ] Delete property
-- [ ] Upload property images
-- [ ] View own listings
+- [x] Create property
+- [x] Edit property
+- [x] Delete property
+- [x] Upload property images
+- [x] View own listings
 
 ### Tenant
 
-- [ ] View approved properties
-- [ ] View property details
+- [x] View approved properties
+- [x] View property details
 
 ### Property status
 
@@ -597,18 +597,14 @@ Once the foundation is stable, advanced technologies can be introduced where the
 
 # Current Status
 
-**Milestone 0 — Project Setup**
+**Milestone 2 (Property Listings) is complete.**
 
-The project structure has been prepared for the new stack.
+- Authentication (Milestone 1): users can register, log in, receive a JWT, log out, and access protected endpoints. Passwords are bcrypt-hashed, JWTs are validated by middleware, and role-based authorization gates routes by role.
+- Property Listings (Milestone 2): landlords can create, edit, delete listings, upload property images, and view their own listings. Tenants can browse approved listings and view detailed property information and photos.
 
 Next development target:
 
-1. Connect Go to SQLite 3
-2. Create the initial database schema
-3. Build the authentication module
-4. Implement registration
-5. Implement login
-6. Add JWT authentication
+**Milestone 3 — Search and Favorites**
 
 ---
 

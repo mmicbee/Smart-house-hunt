@@ -1,23 +1,34 @@
-Since you're studying IT and now have Go experience from Zone01, I'd recommend building this as a modern full-stack project with a clean architecture. That will make development easier and impress your lecturers if they review the codebase.
+# Smart House Hunt — Project Documentation
 
-Project Structure
+The project follows one main principle:
+> **Build the simple version first. Improve it after it works.**
 
+We intentionally begin with a clean, lightweight architecture using plain HTML/CSS/JavaScript on the frontend, Go (Gin) on the backend, JWT authentication, and SQLite 3 for data persistence. This ensures that every component is easy to understand, test, and debug before any advanced technologies or AI services are introduced.
+
+---
+
+## Project Structure
+
+```text
 smart-house-hunt/
 │
 ├── frontend/
-│   ├── public/
-│   ├── src/
-│   │   ├── assets/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── layouts/
-│   │   ├── services/
-│   │   ├── hooks/
-│   │   ├── context/
-│   │   ├── routes/
-│   │   └── utils/
-│   │
-│   └── package.json
+│   ├── css/
+│   │   └── style.css
+│   ├── js/
+│   │   ├── api.js
+│   │   ├── auth.js
+│   │   └── properties.js
+│   ├── pages/
+│   │   ├── login.html
+│   │   ├── register.html
+│   │   ├── properties.html
+│   │   ├── property-details.html
+│   │   ├── my-listings.html
+│   │   └── create-property.html
+│   ├── assets/
+│   │   └── images/
+│   └── index.html
 │
 ├── backend/
 │   ├── cmd/
@@ -27,22 +38,21 @@ smart-house-hunt/
 │   ├── internal/
 │   │   ├── auth/
 │   │   ├── users/
-│   │   ├── tenants/
-│   │   ├── landlords/
-│   │   ├── agents/
 │   │   ├── properties/
-│   │   ├── recommendations/
-│   │   ├── chatbot/
-│   │   ├── fraud/
-│   │   ├── security/
-│   │   ├── notifications/
-│   │   └── reports/
+│   │   ├── favorites/        (Milestone 3)
+│   │   ├── viewing/          (Milestone 4)
+│   │   └── verification/     (Milestone 6)
 │   │
 │   ├── database/
 │   │   ├── migrations/
-│   │   └── seeders/
+│   │   │   ├── 001_initial.sql
+│   │   │   ├── 002_properties.sql
+│   │   │   └── 003_property_images.sql
+│   │   └── database.go
 │   │
 │   ├── middleware/
+│   │   ├── auth.go
+│   │   └── cors.go
 │   ├── routes/
 │   ├── config/
 │   ├── storage/
@@ -50,399 +60,189 @@ smart-house-hunt/
 │   │   ├── user-documents/
 │   │   └── logs/
 │   │
-│   └── go.mod
+│   ├── go.mod
+│   └── go.sum
 │
-├── ai-engine/
+├── ai-engine/ (Future Plan)
 │   ├── recommendation/
 │   ├── price-prediction/
 │   ├── scam-detection/
 │   ├── face-verification/
 │   ├── chatbot/
-│   ├── models/
-│   └── app.py
+│   └── models/
 │
 ├── docs/
-│   ├── proposal/
-│   ├── srs/
-│   ├── diagrams/
-│   └── screenshots/
+│   ├── PROJECT_DOCUMENTATION.md
+│   └── PROJECT_FLOW.md
 │
-├── deployment/
+├── deployment/ (Future Plan)
 │   ├── docker/
 │   ├── nginx/
 │   └── kubernetes/
 │
 └── README.md
-
-
----
-
-Phase 1: MVP (Minimum Viable Product)
-
-Build this first before touching AI.
-
-Authentication
-
-Features
-
-Register
-
-Login
-
-Logout
-
-Password reset
-
-JWT authentication
-
-
-Roles
-
-Tenant
-
-Landlord
-
-Agent
-
-Admin
-
-
+```
 
 ---
 
-Property Module
+## Core Architecture & Stack
 
-Landlord
+### Current Active Stack
 
-Create listing
+| Component | Technology | Rationale |
+| --- | --- | --- |
+| **Frontend** | HTML5, CSS3, Vanilla JS (Fetch API) | Zero build step, fast loading, accessible, easy to inspect. |
+| **Backend** | Go 1.22+, Gin Framework | High performance, simple concurrency, clean idiomatic Go. |
+| **Auth** | JWT (`golang-jwt/jwt/v5`), bcrypt | Stateless authentication, role-based authorization gates. |
+| **Database** | SQLite 3 (`mattn/go-sqlite3`) | Embedded, serverless, zero-configuration, robust SQL transactions. |
+| **File Storage** | Local filesystem (`backend/storage/`) | Direct file serving via `/uploads`, git-ignored directories. |
 
-Edit listing
+### Planned / Future Evolutions (Post-MVP)
 
-Delete listing
-
-Upload photos
-
-
-Tenant
-
-Search houses
-
-View details
-
-Save favorites
-
-
+| Component | Future Technology | Trigger for Adoption |
+| --- | --- | --- |
+| **Frontend** | React / Tailwind CSS | When complex client-side state or rich interactivity warrants a SPA build pipeline. |
+| **Database** | PostgreSQL | When migrating to multi-instance server deployments or heavy concurrent write loads. |
+| **Storage** | MinIO (local) / AWS S3 (production) | When moving image and document storage off the host server to cloud object storage. |
+| **AI Engine** | Python (FastAPI, Scikit-Learn, PyTorch) | Once real property and user interaction datasets exist to train models. |
 
 ---
 
-Admin
+## System Modules & Roadmap
 
-Approve listings
+### Phase 1: MVP (Milestones 0 – 2)
 
-Suspend users
+#### Authentication (Milestone 1 — Complete)
+- User registration with roles (`tenant`, `landlord`, `agent`, `admin`)
+- User login with password verification (bcrypt)
+- JWT token generation and validation middleware
+- Role-based authorization middleware
+- Current user profile endpoint (`GET /api/me`)
+- User logout
 
-View reports
-
-
-
----
-
-Phase 2: Verification System
-
-This is where your project starts becoming unique.
-
-Landlord Verification
-
-Upload ID
-      |
-      v
-Upload Selfie
-      |
-      v
-Admin Review
-      |
-      v
-Verified Badge
-
-Database table:
-
-verification_requests
-
-Fields:
-
-id
-user_id
-id_document
-selfie
-status
-reviewed_by
-created_at
-
+#### Property Listings (Milestone 2 — Complete)
+- **Landlord features:**
+  - Create listing (`POST /api/properties`)
+  - Edit own listing (`PUT /api/properties/:id`)
+  - Delete own listing (`DELETE /api/properties/:id`)
+  - Upload listing photos to local storage (`POST /api/properties/:id/images`)
+  - View own listings (`GET /api/properties/mine` & `my-listings.html`)
+  - Ownership enforcement (403 for unauthorized landlord edits/deletes)
+- **Tenant / Public features:**
+  - Browse approved properties (`GET /api/properties` & `properties.html`)
+  - View property details with full photo gallery (`GET /api/properties/:id` & `property-details.html`)
+  - Non-approved and missing properties return 404
 
 ---
 
-Phase 3: AI Recommendation Engine
+### Phase 2: Discovery & Interaction (Milestones 3 – 4)
 
-User Preferences
+#### Search & Favorites (Milestone 3)
+- Search by location, rent budget, bedrooms, and bathrooms.
+- Save properties to favorites for quick reference.
 
-Store:
-
-Location
-Budget
-Bedrooms
-Bathrooms
-Amenities
-
-AI suggests:
-
-Recommended Houses
-Match Score
-
-Example:
-
-House A → 95%
-House B → 87%
-House C → 75%
-
+#### Viewing Requests & Messaging (Milestone 4)
+- Tenant schedules house viewing visits.
+- Basic messaging between tenants and landlords.
 
 ---
 
-Phase 4: AI Chatbot
+### Phase 3: Administration & Trust (Milestones 5 – 6)
 
-User types:
+#### Admin Dashboard (Milestone 5)
+- Review and approve pending property listings.
+- Suspend accounts violating community guidelines.
+- System metrics and audit trail.
 
-Need a 2-bedroom house below 15k in Kakamega.
-
-Bot translates this into search filters.
-
-Returns matching listings.
-
-
----
-
-Phase 5: Fraud Detection
-
-This is a major selling point.
-
-Checks
-
-Duplicate Images
-
-Image A
-     ==
-Image B
-
-Flag listing.
-
+#### Landlord Verification (Milestone 6)
+- Landlord uploads national ID and selfie.
+- Admin reviews documents in `storage/user-documents/`.
+- Verified badge issued upon confirmation to reduce rental fraud.
 
 ---
 
-Suspicious Pricing
+### Phase 4: Advanced & AI Features (Future Plans)
 
-Example:
+These features will be built in the `ai-engine/` Python service only after the core platform has real user activity and listing data:
 
-Average rent:
+#### AI Recommendation Engine (Planned)
+- Learns tenant search habits, budget, and location preferences.
+- Calculates listing match scores (e.g. 95% match).
 
-KES 15,000
+#### AI Natural Language Chatbot (Planned)
+- Converts tenant search prompts (e.g. "2-bedroom under 15k in Kakamega") into structured API queries.
 
-Listed:
+#### Fraud & Scam Detection (Planned)
+- Perceptual image hashing to flag duplicate images across different landlords.
+- Outlier price detection (e.g. listing 4k in a 20k neighborhood).
+- Complaint volume and pattern monitoring.
 
-KES 4,000
-
-Flag as suspicious.
-
-
----
-
-Complaint Analysis
-
-If many users report a landlord:
-
-Fraud Risk: High
-
+#### Rental Price Prediction (Planned)
+- Machine learning regression model estimating fair market rent based on location, size, and amenities.
 
 ---
 
-Phase 6: Security System
+## Database Schema (Core Tables)
 
-Multi-Factor Authentication
+### Active Tables (SQLite 3)
 
-Email OTP
+```sql
+-- roles
+CREATE TABLE roles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT UNIQUE NOT NULL
+);
 
-or
+-- users
+CREATE TABLE users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role_id INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+);
 
-SMS OTP
+-- properties
+CREATE TABLE properties (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    landlord_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    location TEXT NOT NULL,
+    price INTEGER NOT NULL,
+    bedrooms INTEGER NOT NULL DEFAULT 1,
+    bathrooms INTEGER NOT NULL DEFAULT 1,
+    amenities TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (landlord_id) REFERENCES users(id)
+);
 
+-- property_images
+CREATE TABLE property_images (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    property_id INTEGER NOT NULL,
+    file_path TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (property_id) REFERENCES properties(id)
+);
+```
 
----
+### Planned Milestone Tables
 
-Login Monitoring
-
-Store:
-
-IP Address
-Device
-Country
-Time
-
-Send alert:
-
-New login detected.
-
-
----
-
-Audit Logs
-
-Table:
-
-audit_logs
-
-Tracks:
-
-Login
-Delete Property
-Update Listing
-Verification Approval
-
-
----
-
-Phase 7: Rental Price Prediction
-
-AI model trains on:
-
-Location
-Bedrooms
-Bathrooms
-Amenities
-
-Output:
-
-Expected Rent:
-KES 18,000
-
-Useful for both landlords and tenants.
-
+- `favorites`: `(id, user_id, property_id, created_at)`
+- `viewing_requests`: `(id, user_id, property_id, preferred_date, status, created_at)`
+- `verification_requests`: `(id, user_id, id_document, selfie, status, reviewed_by, created_at)`
+- `audit_logs`: `(id, user_id, action, ip_address, created_at)`
 
 ---
 
-Database Structure
-
-Core tables:
-
-users
-roles
-properties
-property_images
-favorites
-viewing_requests
-messages
-verification_requests
-recommendations
-fraud_reports
-audit_logs
-notifications
-
-
----
-
-Recommended Tech Stack
-
-Frontend
-
-React
-
-Tailwind CSS
-
-
-
----
-
-Backend
-
-Go
-
-Gin Framework
-
-JWT
-
-
-
----
-
-Database
-
-PostgreSQL
-
-
-
----
-
-AI
-
-Python
-
-FastAPI
-
-Scikit-Learn
-
-
-
----
-
-Storage
-
-MinIO (local development)
-
-AWS S3 (production)
-
-
-
----
-
-DevOps
-
-Docker
-
-GitHub Actions
-
-Nginx
-
-
-
----
-
-What I'd Build First (Week 1–4)
-
-1. Authentication
-
-
-2. Property Listings
-
-
-3. Search System
-
-
-4. Favorites
-
-
-5. Admin Dashboard
-
-
-6. Landlord Verification
-
-
-
-Only after these are working would I start:
-
-AI Recommendations
-
-AI Chatbot
-
-Fraud Detection
-
-Price Prediction
-
-
-This order prevents you from spending months on AI before you have actual property and user data to work with. The AI features become much easier once the core platform is already functioning.
+## Summary of Completed Work
+
+1. **Milestone 0 — Project Setup:** Go module, SQLite connection, Gin server, health check.
+2. **Milestone 1 — Authentication:** Register, login, JWT middleware, roles, protected routes.
+3. **Milestone 2 — Property Listings:** Full landlord management (CRUD, photos, my listings), tenant listing view, and details page.
