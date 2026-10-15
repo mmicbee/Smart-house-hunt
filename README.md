@@ -306,12 +306,12 @@ Features:
 
 Admin features:
 
-- [ ] View users
-- [ ] Suspend users
-- [ ] View property listings
-- [ ] Approve listings
-- [ ] Reject listings
-- [ ] View reports
+- [x] View users
+- [x] Suspend users
+- [x] View property listings
+- [x] Approve listings
+- [x] Reject listings
+- [x] View reports
 
 ---
 
@@ -597,16 +597,17 @@ Once the foundation is stable, advanced technologies can be introduced where the
 
 # Current Status
 
-**Milestone 4 (Viewing Requests) is complete.**
+**Milestone 5 (Admin Dashboard) is complete.**
 
 - Authentication (Milestone 1): users can register, log in, receive a JWT, log out, and access protected endpoints. Passwords are bcrypt-hashed, JWTs are validated by middleware, and role-based authorization gates routes by role.
 - Property Listings (Milestone 2): landlords can create, edit, delete listings, upload property images, and view their own listings. Tenants can browse approved listings and view detailed property information and photos.
 - Search and Favorites (Milestone 3): tenants can search and filter approved properties by location, price range, bedrooms, bathrooms, and amenities. Authenticated users can save, check, view, and remove favorite listings with responsive UI controls.
 - Viewing Requests (Milestone 4): tenants can request in-person viewing visits with landlords for approved properties, specify preferred date/time and notes, avoid duplicate pending requests, and track or cancel pending requests. Landlords can view incoming viewing inquiries with tenant details, accept visits, and reject visits.
+- Admin Dashboard (Milestone 5): platform administrators have a comprehensive management portal (`pages/admin-dashboard.html`) to review, approve, reject, suspend, or delete property listings; view, search, and suspend/activate user accounts; and monitor real-time system metrics, analytics reports, and a recent platform activity feed. Suspended users are barred from logging in.
 
 Next development target:
 
-**Milestone 5 — Admin Dashboard**
+**Milestone 6 — Landlord Verification**
 
 ---
 

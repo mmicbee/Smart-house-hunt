@@ -57,17 +57,17 @@
 - Landlord: create, edit, delete properties, upload photos to local storage, view own listings.
 - Tenant: browse approved properties, view property details and images.
 
-**Milestone 3: Search and Favorites** (Next)
+**Milestone 3: Search and Favorites** (Completed)
 - Search by location, price range, bedrooms.
 - Save and view favorite properties.
 
-**Milestone 4: Viewing Requests & Messaging**
+**Milestone 4: Viewing Requests & Messaging** (Completed)
 - Book house visit, basic tenant-landlord communication.
 
-**Milestone 5: Admin Dashboard**
-- Review & approve listings, manage users.
+**Milestone 5: Admin Dashboard** (Completed)
+- Review & approve listings, manage users, platform reports.
 
-**Milestone 6: Landlord Verification & Security**
+**Milestone 6: Landlord Verification & Security** (Next)
 - Upload ID and selfie, manual admin verification, secure document handling.
 
 **Future Plans (After Core Platform is Stable)**

@@ -149,10 +149,25 @@ smart-house-hunt/
 
 ### Phase 3: Administration & Trust (Milestones 5 – 6)
 
-#### Admin Dashboard (Milestone 5)
-- Review and approve pending property listings.
-- Suspend accounts violating community guidelines.
-- System metrics and audit trail.
+#### Admin Dashboard (Milestone 5 — Complete)
+- **Property Moderation:**
+  - List all platform listings with landlord details (`GET /api/admin/properties`)
+  - Filter by status (`pending`, `approved`, `rejected`, `suspended`) and house type
+  - Approve pending listings (`PUT /api/admin/properties/:id/approve` or `PUT /api/admin/properties/:id/status`)
+  - Reject listings (`PUT /api/admin/properties/:id/reject`)
+  - Suspend listings (`PUT /api/admin/properties/:id/status`)
+  - Delete listings (`DELETE /api/admin/properties/:id`)
+- **User Account Management:**
+  - View all user accounts with roles and account status (`GET /api/admin/users`)
+  - Filter by role (`tenant`, `landlord`, `agent`, `admin`) and status (`active`, `suspended`)
+  - Search by name or email
+  - Suspend or activate user accounts (`PUT /api/admin/users/:id/status`)
+  - Self-suspension protection preventing admin lockouts
+  - Suspended account enforcement on login (HTTP 403)
+- **Reports & Platform Metrics:**
+  - Aggregate statistics on users, properties, viewings, favorites, and recent platform activity (`GET /api/admin/reports`)
+- **Frontend Portal:**
+  - Dedicated admin management dashboard (`frontend/pages/admin-dashboard.html` and `frontend/js/admin.js`) with responsive status filters, moderation actions, and real-time metric counters.
 
 #### Landlord Verification (Milestone 6)
 - Landlord uploads national ID and selfie.
