@@ -10,7 +10,7 @@
   <header class="site-header">
     <div class="container nav">
       <a class="brand" href="../index.html">Smart House Hunt</a>
-      <nav>
+      <nav id="nav-links">
         <a href="properties.html">Find a House</a>
         <a href="../index.html">Home</a>
       </nav>
@@ -26,8 +26,16 @@
 
     <div id="property-container" class="hidden">
       <div class="property-details-card">
-        <h1 id="prop-title"></h1>
-        <p class="listing-meta" id="prop-location"></p>
+        <div class="details-header">
+          <div>
+            <h1 id="prop-title"></h1>
+            <p class="listing-meta" id="prop-location"></p>
+          </div>
+          <button type="button" id="fav-toggle-btn" class="btn-fav hidden">
+            ♡ Save to Favorites
+          </button>
+        </div>
+
         <p class="property-details-price" id="prop-price"></p>
 
         <div id="prop-images" class="details-images"></div>
@@ -59,14 +67,66 @@
   </main>
 
   <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
   <script src="../js/properties.js"></script>
   <script>
     const messageEl = document.getElementById("message");
     const containerEl = document.getElementById("property-container");
+    const favToggleBtn = document.getElementById("fav-toggle-btn");
+    const navLinks = document.getElementById("nav-links");
+
+    const currentUser = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    let isFavorited = false;
+
+    function renderNav() {
+      if (currentUser) {
+        const favLink = document.createElement("a");
+        favLink.href = "favorites.html";
+        favLink.textContent = "My Favorites";
+        navLinks.appendChild(favLink);
+
+        if (currentUser.role === "landlord") {
+          const listLink = document.createElement("a");
+          listLink.href = "create-property.html";
+          listLink.textContent = "List a House";
+          const mineLink = document.createElement("a");
+          mineLink.href = "my-listings.html";
+          mineLink.textContent = "My Listings";
+          navLinks.appendChild(listLink);
+          navLinks.appendChild(mineLink);
+        }
+
+        const logoutLink = document.createElement("a");
+        logoutLink.href = "#";
+        logoutLink.textContent = `Log out (${currentUser.name})`;
+        logoutLink.addEventListener("click", (e) => {
+          e.preventDefault();
+          logout();
+        });
+        navLinks.appendChild(logoutLink);
+      } else {
+        const loginLink = document.createElement("a");
+        loginLink.href = "login.html";
+        loginLink.textContent = "Login";
+        navLinks.appendChild(loginLink);
+      }
+    }
 
     function showMessage(text, ok) {
+      if (!text) {
+        messageEl.textContent = "";
+        messageEl.className = "form-message";
+        return;
+      }
       messageEl.textContent = text;
       messageEl.className = ok ? "form-message success" : "form-message error";
+    }
+
+    function updateFavButton(fav) {
+      isFavorited = fav;
+      favToggleBtn.className = isFavorited ? "btn-fav active" : "btn-fav";
+      favToggleBtn.innerHTML = isFavorited ? "♥ Saved to Favorites" : "♡ Save to Favorites";
+      favToggleBtn.title = isFavorited ? "Remove from favorites" : "Save to favorites";
     }
 
     async function loadDetails() {
@@ -117,12 +177,42 @@
           document.getElementById("amenities-section").style.display = "none";
         }
 
+        if (currentUser) {
+          favToggleBtn.classList.remove("hidden");
+          try {
+            const favCheck = await checkFavorite(id);
+            updateFavButton(Boolean(favCheck && favCheck.is_favorite));
+          } catch (e) {
+            // Ignore favorite check error
+          }
+
+          favToggleBtn.onclick = async () => {
+            try {
+              favToggleBtn.disabled = true;
+              if (isFavorited) {
+                await removeFavorite(id);
+                updateFavButton(false);
+                showMessage("Removed from favorites", true);
+              } else {
+                await addFavorite(id);
+                updateFavButton(true);
+                showMessage("Saved to favorites", true);
+              }
+            } catch (err) {
+              showMessage(err.message || "Failed to update favorite", false);
+            } finally {
+              favToggleBtn.disabled = false;
+            }
+          };
+        }
+
         containerEl.classList.remove("hidden");
       } catch (error) {
         showMessage(error.message || "Property not found.", false);
       }
     }
 
+    renderNav();
     loadDetails();
   </script>
 </body>

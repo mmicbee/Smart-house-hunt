@@ -59,6 +59,11 @@
       });
       authArea.appendChild(greeting);
       authArea.appendChild(logoutLink);
+      const favLink = document.createElement("a");
+      favLink.href = "pages/favorites.html";
+      favLink.textContent = "My Favorites";
+      authArea.appendChild(document.createTextNode(" "));
+      authArea.appendChild(favLink);
 
       if (user.role === "landlord") {
         const listLink = document.createElement("a");
