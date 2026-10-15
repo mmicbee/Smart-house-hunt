@@ -88,10 +88,11 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	roleName, _ := h.users.RoleByID(user.RoleID)
 	c.JSON(http.StatusCreated, UserResponse{
-		ID:    user.ID,
-		Name:  user.Name,
-		Email: user.Email,
-		Role:  roleName,
+		ID:     user.ID,
+		Name:   user.Name,
+		Email:  user.Email,
+		Role:   roleName,
+		Status: user.Status,
 	})
 }
 
@@ -123,6 +124,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	if user.Status == "suspended" {
+		c.JSON(http.StatusForbidden, gin.H{"message": "your account has been suspended"})
+		return
+	}
+
 	roleName, _ := h.users.RoleByID(user.RoleID)
 
 	token, err := GenerateToken(h.secret, user.ID, roleName, 24*time.Hour)
@@ -134,10 +140,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, LoginResponse{
 		Token: token,
 		User: UserResponse{
-			ID:    user.ID,
-			Name:  user.Name,
-			Email: user.Email,
-			Role:  roleName,
+			ID:     user.ID,
+			Name:   user.Name,
+			Email:  user.Email,
+			Role:   roleName,
+			Status: user.Status,
 		},
 	})
 }

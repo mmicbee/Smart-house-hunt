@@ -20,6 +20,12 @@ func RunMigrations(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
+	if len(files) == 0 {
+		files, err = filepath.Glob("migrations/*.sql")
+		if err != nil {
+			return err
+		}
+	}
 	sort.Strings(files)
 
 	for _, file := range files {
@@ -39,10 +45,17 @@ func RunMigrations(db *sql.DB) error {
 			return err
 		}
 
-		if _, err := db.Exec(string(content)); err != nil {
-			// If column already exists in SQLite, ignore duplicate column error
-			if !strings.Contains(err.Error(), "duplicate column name") {
-				return err
+		statements := strings.Split(string(content), ";")
+		for _, stmt := range statements {
+			stmt = strings.TrimSpace(stmt)
+			if stmt == "" {
+				continue
+			}
+			if _, err := db.Exec(stmt); err != nil {
+				// If column already exists in SQLite, ignore duplicate column error
+				if !strings.Contains(err.Error(), "duplicate column name") {
+					return err
+				}
 			}
 		}
 

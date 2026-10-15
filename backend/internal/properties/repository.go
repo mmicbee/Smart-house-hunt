@@ -262,3 +262,33 @@ func (r *Repository) AddImage(image *PropertyImage) error {
 		&image.CreatedAt,
 	)
 }
+
+func (r *Repository) UpdateStatus(id int64, status string) (*Property, error) {
+	query := `
+		UPDATE properties
+		SET status = ?, updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?
+		RETURNING ` + propertyColumns + `
+	`
+
+	p := &Property{}
+	err := r.db.QueryRow(query, status, id).Scan(
+		&p.ID,
+		&p.LandlordID,
+		&p.Title,
+		&p.Description,
+		&p.Location,
+		&p.Price,
+		&p.Bedrooms,
+		&p.Bathrooms,
+		&p.Amenities,
+		&p.PropertyType,
+		&p.Status,
+		&p.CreatedAt,
+		&p.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return p, nil
+}

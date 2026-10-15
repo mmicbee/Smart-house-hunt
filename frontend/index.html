@@ -111,6 +111,14 @@
         authArea.appendChild(document.createTextNode(" "));
         authArea.appendChild(inquiriesLink);
       }
+
+      if (user.role === "admin") {
+        const adminLink = document.createElement("a");
+        adminLink.href = "pages/admin-dashboard.html";
+        adminLink.textContent = "Admin Dashboard";
+        authArea.appendChild(document.createTextNode(" "));
+        authArea.appendChild(adminLink);
+      }
     } else {
       const loginLink = document.createElement("a");
       loginLink.href = "pages/login.html";

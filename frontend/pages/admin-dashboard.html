@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Smart House Hunt</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <a class="brand" href="../index.html">Smart House Hunt</a>
+        <span class="admin-header-badge">Admin</span>
+      </div>
+      <nav id="nav-links">
+        <a href="admin-dashboard.html" class="active" style="font-weight: 700; color: #2563eb;">Admin Dashboard</a>
+        <a href="properties.html">Find a House</a>
+        <a href="../index.html">Home</a>
+        <a href="#" id="logout-btn">Log out</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="page-head">
+      <div>
+        <h1>Admin Management Dashboard</h1>
+        <p class="listing-meta">Review property listings, manage user accounts, and track platform metrics.</p>
+      </div>
+      <div>
+        <button type="button" class="btn secondary" id="refresh-btn">🔄 Refresh Data</button>
+      </div>
+    </div>
+
+    <!-- Alert Message Banner -->
+    <div id="alert-banner" class="form-message" style="display: none; margin-bottom: 20px;"></div>
+
+    <!-- Top Platform Overview Stat Cards -->
+    <section class="admin-stats-grid" id="stats-overview">
+      <div class="admin-stat-card" id="stat-card-pending">
+        <span class="stat-label">Pending Approval</span>
+        <span class="stat-num" id="stat-pending-props" style="color: #d97706;">0</span>
+        <span class="stat-sub" id="stat-pending-sub">Awaiting admin review</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="stat-label">Total Properties</span>
+        <span class="stat-num" id="stat-total-props">0</span>
+        <span class="stat-sub" id="stat-props-sub">0 approved • 0 rejected</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="stat-label">Platform Users</span>
+        <span class="stat-num" id="stat-total-users">0</span>
+        <span class="stat-sub" id="stat-users-sub">0 active • 0 suspended</span>
+      </div>
+      <div class="admin-stat-card">
+        <span class="stat-label">Viewing Requests</span>
+        <span class="stat-num" id="stat-total-viewings">0</span>
+        <span class="stat-sub" id="stat-viewings-sub">0 accepted • 0 pending</span>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <div class="admin-tabs">
+      <button type="button" class="admin-tab-btn active" data-tab="properties">
+        📋 Property Listings
+        <span class="tab-badge" id="pending-tab-badge" style="display: none;">0</span>
+      </button>
+      <button type="button" class="admin-tab-btn" data-tab="users">
+        👥 User Accounts
+      </button>
+      <button type="button" class="admin-tab-btn" data-tab="reports">
+        📊 Reports &amp; Metrics
+      </button>
+    </div>
+
+    <!-- TAB 1: PROPERTIES MODERATION -->
+    <section id="section-properties" class="admin-tab-content">
+      <div class="admin-controls">
+        <div class="admin-filters">
+          <span style="font-size: 0.88rem; font-weight: 600; color: #4b5563;">Status:</span>
+          <button type="button" class="chip-btn active prop-status-filter" data-status="all">All</button>
+          <button type="button" class="chip-btn prop-status-filter" data-status="pending">Pending Review</button>
+          <button type="button" class="chip-btn prop-status-filter" data-status="approved">Approved</button>
+          <button type="button" class="chip-btn prop-status-filter" data-status="rejected">Rejected</button>
+          <button type="button" class="chip-btn prop-status-filter" data-status="suspended">Suspended</button>
+        </div>
+        <div class="admin-filters">
+          <label for="prop-type-filter" style="font-size: 0.88rem; font-weight: 600; color: #4b5563;">Type:</label>
+          <select id="prop-type-filter" style="padding: 7px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.88rem;">
+            <option value="all">All Types</option>
+            <option value="bedsitter">Bedsitter</option>
+            <option value="studio">Studio</option>
+            <option value="apartment">Apartment</option>
+            <option value="house">House / Villa</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>House</th>
+              <th>Type</th>
+              <th>Location</th>
+              <th>Rent</th>
+              <th>Landlord</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="properties-table-body">
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 32px; color: #6b7280;">Loading property listings...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 2: USERS MANAGEMENT -->
+    <section id="section-users" class="admin-tab-content" style="display: none;">
+      <div class="admin-controls">
+        <div class="admin-filters">
+          <span style="font-size: 0.88rem; font-weight: 600; color: #4b5563;">Role:</span>
+          <button type="button" class="chip-btn active user-role-filter" data-role="all">All</button>
+          <button type="button" class="chip-btn user-role-filter" data-role="landlord">Landlords</button>
+          <button type="button" class="chip-btn user-role-filter" data-role="tenant">Tenants</button>
+          <button type="button" class="chip-btn user-role-filter" data-role="agent">Agents</button>
+          <button type="button" class="chip-btn user-role-filter" data-role="admin">Admins</button>
+        </div>
+        <div class="admin-filters">
+          <input type="text" id="user-search-input" placeholder="Search by name or email..." style="padding: 7px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.88rem; min-width: 220px;">
+          <select id="user-status-filter" style="padding: 7px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.88rem;">
+            <option value="all">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="admin-table-container">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Registered</th>
+              <th>Account Action</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body">
+            <tr>
+              <td colspan="7" style="text-align: center; padding: 32px; color: #6b7280;">Loading user accounts...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 3: REPORTS & METRICS -->
+    <section id="section-reports" class="admin-tab-content" style="display: none;">
+      <div class="reports-breakdown-grid">
+        <!-- Property Metrics -->
+        <div class="report-breakdown-card">
+          <h3>🏡 Property Status Breakdown</h3>
+          <div class="breakdown-row">
+            <span class="breakdown-label"><span class="badge badge-approved">Approved</span> Live on site</span>
+            <span class="breakdown-val" id="rep-props-approved">0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="breakdown-label"><span class="badge badge-pending">Pending</span> Needs review</span>
+            <span class="breakdown-val" id="rep-props-pending">0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="breakdown-label"><span class="badge badge-rejected">Rejected</span> Declined by admin</span>
+            <span class="breakdown-val" id="rep-props-rejected">0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="breakdown-label"><span class="badge badge-suspended">Suspended</span> Delisted</span>
+            <span class="breakdown-val" id="rep-props-suspended">0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="breakdown-label" style="font-weight: 700;">Total Properties</span>
+            <span class="breakdown-val" id="rep-props-total">0</span>
+          </div>
+        </div>
+
+        <!-- Users Breakdown -->
+        <div class="report-breakdown-card">
+          <h3>👥 Users by Role</h3>
+          <div class="breakdown-row">
+            <span class="breakdown-label">Tenants</span>
+            <span class="breakdown-val" id="rep-users-tenants">0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="breakdown-label">Landlords</span>
+            <span class="breakdown-val" id="rep-users-landlords">0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="breakdown-label">Agents</span>
+            <span class="breakdown-val" id="rep-users-agents">0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="breakdown-label">System Admins</span>
+            <span class="breakdown-val" id="rep-users-admins">0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="breakdown-label" style="font-weight: 700;">Total Accounts</span>
+            <span class="breakdown-val" id="rep-users-total">0</span>
+          </div>
+        </div>
+
+        <!-- Viewing & Engagement Breakdown -->
+        <div class="report-breakdown-card">
+          <h3>📅 Viewing Requests &amp; Activity</h3>
+          <div class="breakdown-row">
+            <span class="breakdown-label"><span class="badge badge-accepted">Accepted</span> Scheduled tours</span>
+            <span class="breakdown-val" id="rep-viewings-accepted">0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="breakdown-label"><span class="badge badge-pending">Pending</span> Landlord review</span>
+            <span class="breakdown-val" id="rep-viewings-pending">0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="breakdown-label"><span class="badge badge-rejected">Rejected</span> Declined tours</span>
+            <span class="breakdown-val" id="rep-viewings-rejected">0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="breakdown-label"><span class="badge badge-cancelled">Cancelled</span> Tenant cancelled</span>
+            <span class="breakdown-val" id="rep-viewings-cancelled">0</span>
+          </div>
+          <div class="breakdown-row">
+            <span class="breakdown-label">Total Saved Favorites</span>
+            <span class="breakdown-val" id="rep-favorites-total">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Platform Activity Feed -->
+      <div class="report-breakdown-card">
+        <h3>⚡ Recent Platform Activity</h3>
+        <div class="recent-activity-list" id="recent-activity-feed">
+          <p class="listing-meta">No activity recorded yet.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 Smart House Hunt — Admin Console</p>
+    </div>
+  </footer>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/properties.js"></script>
+  <script src="../js/admin.js"></script>
+  <script>
+    // Verify admin access
+    const currentUser = getCurrentUser();
+    if (!currentUser || currentUser.role !== "admin") {
+      alert("Access denied. Administrator privileges required.");
+      window.location.href = "login.html";
+    }
+
+    // Elements
+    const alertBanner = document.getElementById("alert-banner");
+    const logoutBtn = document.getElementById("logout-btn");
+    const refreshBtn = document.getElementById("refresh-btn");
+
+    logoutBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      logout();
+    });
+
+    function showAlert(message, isSuccess = true) {
+      alertBanner.textContent = message;
+      alertBanner.className = isSuccess ? "form-message success" : "form-message error";
+      alertBanner.style.display = "block";
+      alertBanner.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      setTimeout(() => {
+        alertBanner.style.display = "none";
+      }, 5000);
+    }
+
+    // Tabs logic
+    const tabBtns = document.querySelectorAll(".admin-tab-btn");
+    const tabContents = {
+      properties: document.getElementById("section-properties"),
+      users: document.getElementById("section-users"),
+      reports: document.getElementById("section-reports")
+    };
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        tabBtns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const selected = btn.getAttribute("data-tab");
+        Object.keys(tabContents).forEach(tab => {
+          tabContents[tab].style.display = tab === selected ? "block" : "none";
+        });
+      });
+    });
+
+    // Overview Stats Loader
+    async function loadStats() {
+      try {
+        const res = await getAdminReports();
+        const reports = res.reports;
+        if (!reports) return;
+
+        // Top cards
+        const pendingCount = reports.properties.pending || 0;
+        document.getElementById("stat-pending-props").textContent = pendingCount;
+        const pendingBadge = document.getElementById("pending-tab-badge");
+        if (pendingCount > 0) {
+          pendingBadge.textContent = pendingCount;
+          pendingBadge.style.display = "inline-block";
+          document.getElementById("stat-card-pending").classList.add("alert-card");
+        } else {
+          pendingBadge.style.display = "none";
+          document.getElementById("stat-card-pending").classList.remove("alert-card");
+        }
+
+        document.getElementById("stat-total-props").textContent = reports.properties.total || 0;
+        document.getElementById("stat-props-sub").textContent = `${reports.properties.approved || 0} approved • ${reports.properties.rejected || 0} rejected`;
+
+        document.getElementById("stat-total-users").textContent = reports.users.total || 0;
+        document.getElementById("stat-users-sub").textContent = `${reports.users.active || 0} active • ${reports.users.suspended || 0} suspended`;
+
+        document.getElementById("stat-total-viewings").textContent = reports.viewings.total || 0;
+        document.getElementById("stat-viewings-sub").textContent = `${reports.viewings.accepted || 0} accepted • ${reports.viewings.pending || 0} pending`;
+
+        // Reports tab details
+        document.getElementById("rep-props-approved").textContent = reports.properties.approved || 0;
+        document.getElementById("rep-props-pending").textContent = reports.properties.pending || 0;
+        document.getElementById("rep-props-rejected").textContent = reports.properties.rejected || 0;
+        document.getElementById("rep-props-suspended").textContent = reports.properties.suspended || 0;
+        document.getElementById("rep-props-total").textContent = reports.properties.total || 0;
+
+        document.getElementById("rep-users-tenants").textContent = reports.users.tenants || 0;
+        document.getElementById("rep-users-landlords").textContent = reports.users.landlords || 0;
+        document.getElementById("rep-users-agents").textContent = reports.users.agents || 0;
+        document.getElementById("rep-users-admins").textContent = reports.users.admins || 0;
+        document.getElementById("rep-users-total").textContent = reports.users.total || 0;
+
+        document.getElementById("rep-viewings-accepted").textContent = reports.viewings.accepted || 0;
+        document.getElementById("rep-viewings-pending").textContent = reports.viewings.pending || 0;
+        document.getElementById("rep-viewings-rejected").textContent = reports.viewings.rejected || 0;
+        document.getElementById("rep-viewings-cancelled").textContent = reports.viewings.cancelled || 0;
+        document.getElementById("rep-favorites-total").textContent = reports.total_favorites || 0;
+
+        // Recent activity feed
+        const feed = document.getElementById("recent-activity-feed");
+        feed.innerHTML = "";
+        const recent = reports.recent_activity || [];
+        if (recent.length === 0) {
+          feed.innerHTML = `<p class="listing-meta">No activity recorded yet.</p>`;
+        } else {
+          recent.forEach(item => {
+            const row = document.createElement("div");
+            row.className = "recent-activity-item";
+            let icon = "📌";
+            if (item.type === "property") icon = "🏡";
+            if (item.type === "user") icon = "👤";
+            if (item.type === "viewing") icon = "📅";
+
+            const dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString() : "";
+            row.innerHTML = `
+              <div class="activity-icon">${icon}</div>
+              <div class="activity-content">
+                <div class="activity-title">${escapeHTML(item.title)}</div>
+                <div class="activity-details">${escapeHTML(item.details)}</div>
+                <div class="activity-time">${dateStr}</div>
+              </div>
+            `;
+            feed.appendChild(row);
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load platform stats:", err);
+      }
+    }
+
+    // PROPERTIES MODERATION
+    let currentPropStatus = "all";
+    let currentPropType = "all";
+
+    document.querySelectorAll(".prop-status-filter").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".prop-status-filter").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentPropStatus = btn.getAttribute("data-status");
+        loadPropertiesTable();
+      });
+    });
+
+    document.getElementById("prop-type-filter").addEventListener("change", (e) => {
+      currentPropType = e.target.value;
+      loadPropertiesTable();
+    });
+
+    async function loadPropertiesTable() {
+      const tbody = document.getElementById("properties-table-body");
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 24px; color:#6b7280;">Loading properties...</td></tr>`;
+
+      try {
+        const res = await getAdminProperties({
+          status: currentPropStatus,
+          property_type: currentPropType
+        });
+        const list = res.properties || [];
+        tbody.innerHTML = "";
+
+        if (list.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 32px; color:#6b7280;">No properties match the selected criteria.</td></tr>`;
+          return;
+        }
+
+        list.forEach(prop => {
+          const tr = document.createElement("tr");
+
+          // Image thumbnail
+          let thumbSrc = "../assets/images/default-house.svg";
+          if (prop.images && prop.images.length > 0) {
+            thumbSrc = `../${prop.images[0].file_path}`;
+          }
+
+          const propType = (prop.property_type || "apartment").toLowerCase();
+          const statusClass = `badge-${prop.status}`;
+
+          tr.innerHTML = `
+            <td>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="${thumbSrc}" alt="${escapeHTML(prop.title)}" class="table-thumb" onerror="this.src='../assets/images/default-house.svg'">
+                <div class="table-prop-info">
+                  <a href="property-details.html?id=${prop.id}" class="table-prop-title" target="_blank">${escapeHTML(prop.title)}</a>
+                  <span class="table-prop-sub">${prop.bedrooms} bed • ${prop.bathrooms} bath</span>
+                </div>
+              </div>
+            </td>
+            <td><span class="badge badge-type badge-${propType}">${escapeHTML(prop.property_type || "apartment")}</span></td>
+            <td>${escapeHTML(prop.location)}</td>
+            <td style="font-weight: 700; color: #2563eb;">KES ${Number(prop.price).toLocaleString()}</td>
+            <td>
+              <div class="table-prop-info">
+                <span>${escapeHTML(prop.landlord_name || "Landlord #" + prop.landlord_id)}</span>
+                <span class="table-prop-sub">${escapeHTML(prop.landlord_email || "")}</span>
+              </div>
+            </td>
+            <td><span class="badge ${statusClass}">${escapeHTML(prop.status)}</span></td>
+            <td>
+              <div class="admin-actions">
+                ${prop.status !== "approved" ? `<button type="button" class="btn-approve" onclick="handleApprove(${prop.id})">✓ Approve</button>` : ""}
+                ${prop.status !== "rejected" ? `<button type="button" class="btn-reject" onclick="handleReject(${prop.id})">✕ Reject</button>` : ""}
+                ${prop.status === "approved" ? `<button type="button" class="btn-suspend" onclick="handleSuspendProp(${prop.id})">⏸ Suspend</button>` : ""}
+                <button type="button" class="btn-delete-admin" onclick="handleDeleteProp(${prop.id})">🗑 Delete</button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 24px; color:#dc2626;">Failed to load properties: ${escapeHTML(err.message)}</td></tr>`;
+      }
+    }
+
+    window.handleApprove = async function(id) {
+      try {
+        await approveProperty(id);
+        showAlert(`Property #${id} has been approved and is now live.`);
+        loadPropertiesTable();
+        loadStats();
+      } catch (err) {
+        showAlert(err.message, false);
+      }
+    };
+
+    window.handleReject = async function(id) {
+      if (!confirm(`Are you sure you want to reject property #${id}?`)) return;
+      try {
+        await rejectProperty(id);
+        showAlert(`Property #${id} has been rejected.`);
+        loadPropertiesTable();
+        loadStats();
+      } catch (err) {
+        showAlert(err.message, false);
+      }
+    };
+
+    window.handleSuspendProp = async function(id) {
+      if (!confirm(`Suspend property #${id}? It will be hidden from public search.`)) return;
+      try {
+        await updatePropertyStatus(id, "suspended");
+        showAlert(`Property #${id} has been suspended.`);
+        loadPropertiesTable();
+        loadStats();
+      } catch (err) {
+        showAlert(err.message, false);
+      }
+    };
+
+    window.handleDeleteProp = async function(id) {
+      if (!confirm(`Permanently delete property #${id}? This action cannot be undone.`)) return;
+      try {
+        await deleteAdminProperty(id);
+        showAlert(`Property #${id} deleted successfully.`);
+        loadPropertiesTable();
+        loadStats();
+      } catch (err) {
+        showAlert(err.message, false);
+      }
+    };
+
+    // USERS MANAGEMENT
+    let currentUserRole = "all";
+    let currentUserStatus = "all";
+    let userSearchTerm = "";
+
+    document.querySelectorAll(".user-role-filter").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".user-role-filter").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentUserRole = btn.getAttribute("data-role");
+        loadUsersTable();
+      });
+    });
+
+    document.getElementById("user-status-filter").addEventListener("change", (e) => {
+      currentUserStatus = e.target.value;
+      loadUsersTable();
+    });
+
+    let searchTimeout = null;
+    document.getElementById("user-search-input").addEventListener("input", (e) => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        userSearchTerm = e.target.value.trim();
+        loadUsersTable();
+      }, 300);
+    });
+
+    async function loadUsersTable() {
+      const tbody = document.getElementById("users-table-body");
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 24px; color:#6b7280;">Loading user accounts...</td></tr>`;
+
+      try {
+        const res = await getAdminUsers({
+          role: currentUserRole,
+          status: currentUserStatus,
+          search: userSearchTerm
+        });
+        const users = res.users || [];
+        tbody.innerHTML = "";
+
+        if (users.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 32px; color:#6b7280;">No user accounts found matching the criteria.</td></tr>`;
+          return;
+        }
+
+        users.forEach(u => {
+          const tr = document.createElement("tr");
+          const isSelf = u.id === currentUser.id;
+          const isSuspended = u.status === "suspended";
+          const statusBadge = isSuspended
+            ? `<span class="badge badge-suspended">Suspended</span>`
+            : `<span class="badge badge-active">Active</span>`;
+
+          const dateStr = u.created_at ? new Date(u.created_at).toLocaleDateString() : "-";
+
+          let actionBtn = "";
+          if (isSelf) {
+            actionBtn = `<span class="table-prop-sub">(Logged in)</span>`;
+          } else if (isSuspended) {
+            actionBtn = `<button type="button" class="btn-activate" onclick="handleUserStatusToggle(${u.id}, 'active')">✓ Activate Account</button>`;
+          } else {
+            actionBtn = `<button type="button" class="btn-suspend" onclick="handleUserStatusToggle(${u.id}, 'suspended')">⏸ Suspend Account</button>`;
+          }
+
+          tr.innerHTML = `
+            <td>#${u.id}</td>
+            <td style="font-weight: 600;">${escapeHTML(u.name)}</td>
+            <td>${escapeHTML(u.email)}</td>
+            <td><span class="badge badge-type">${escapeHTML(u.role || "user")}</span></td>
+            <td>${statusBadge}</td>
+            <td>${dateStr}</td>
+            <td>${actionBtn}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 24px; color:#dc2626;">Failed to load users: ${escapeHTML(err.message)}</td></tr>`;
+      }
+    }
+
+    window.handleUserStatusToggle = async function(id, newStatus) {
+      const verb = newStatus === "suspended" ? "suspend" : "activate";
+      if (!confirm(`Are you sure you want to ${verb} user account #${id}?`)) return;
+
+      try {
+        await updateUserStatus(id, newStatus);
+        showAlert(`User #${id} status changed to ${newStatus}.`);
+        loadUsersTable();
+        loadStats();
+      } catch (err) {
+        showAlert(err.message, false);
+      }
+    };
+
+    refreshBtn.addEventListener("click", () => {
+      loadStats();
+      loadPropertiesTable();
+      loadUsersTable();
+      showAlert("Dashboard data refreshed.");
+    });
+
+    function escapeHTML(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Initialize
+    loadStats();
+    loadPropertiesTable();
+    loadUsersTable();
+  </script>
+</body>
+</html>
