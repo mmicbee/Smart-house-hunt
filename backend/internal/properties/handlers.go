@@ -39,16 +39,22 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
+	propType := strings.ToLower(strings.TrimSpace(req.PropertyType))
+	if propType == "" {
+		propType = detectPropertyType(req.Title, req.Bedrooms)
+	}
+
 	property := &Property{
-		LandlordID:  landlordID,
-		Title:       req.Title,
-		Description: req.Description,
-		Location:    req.Location,
-		Price:       req.Price,
-		Bedrooms:    req.Bedrooms,
-		Bathrooms:   req.Bathrooms,
-		Amenities:   req.Amenities,
-		Status:      "pending",
+		LandlordID:   landlordID,
+		Title:        req.Title,
+		Description:  req.Description,
+		Location:     req.Location,
+		Price:        req.Price,
+		Bedrooms:     req.Bedrooms,
+		Bathrooms:    req.Bathrooms,
+		Amenities:    req.Amenities,
+		PropertyType: propType,
+		Status:       "pending",
 	}
 
 	if err := h.repo.Create(property); err != nil {
@@ -100,6 +106,9 @@ func (h *Handler) Update(c *gin.Context) {
 	property.Bedrooms = req.Bedrooms
 	property.Bathrooms = req.Bathrooms
 	property.Amenities = req.Amenities
+	if req.PropertyType != "" {
+		property.PropertyType = strings.ToLower(strings.TrimSpace(req.PropertyType))
+	}
 
 	if err := h.repo.Update(property); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not update property"})
@@ -248,6 +257,14 @@ func (h *Handler) ListApproved(c *gin.Context) {
 		hasFilter = true
 	}
 
+	if pt := strings.TrimSpace(c.Query("property_type")); pt != "" {
+		filters.PropertyType = pt
+		hasFilter = true
+	} else if pt := strings.TrimSpace(c.Query("type")); pt != "" {
+		filters.PropertyType = pt
+		hasFilter = true
+	}
+
 	if minPriceStr := strings.TrimSpace(c.Query("min_price")); minPriceStr != "" {
 		val, err := strconv.ParseInt(minPriceStr, 10, 64)
 		if err != nil || val < 0 {
@@ -274,13 +291,23 @@ func (h *Handler) ListApproved(c *gin.Context) {
 	}
 
 	if bedsStr := strings.TrimSpace(c.Query("bedrooms")); bedsStr != "" {
-		val, err := strconv.Atoi(bedsStr)
-		if err != nil || val < 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid bedrooms parameter"})
-			return
+		if strings.HasSuffix(bedsStr, "+") {
+			val, err := strconv.Atoi(strings.TrimSuffix(bedsStr, "+"))
+			if err != nil || val < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"message": "invalid bedrooms parameter"})
+				return
+			}
+			filters.MinBedrooms = &val
+			hasFilter = true
+		} else {
+			val, err := strconv.Atoi(bedsStr)
+			if err != nil || val < 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"message": "invalid bedrooms parameter"})
+				return
+			}
+			filters.Bedrooms = &val
+			hasFilter = true
 		}
-		filters.Bedrooms = &val
-		hasFilter = true
 	}
 
 	if bathsStr := strings.TrimSpace(c.Query("bathrooms")); bathsStr != "" {

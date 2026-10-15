@@ -33,6 +33,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 		bedrooms INTEGER NOT NULL DEFAULT 1,
 		bathrooms INTEGER NOT NULL DEFAULT 1,
 		amenities TEXT NOT NULL DEFAULT '',
+		property_type TEXT NOT NULL DEFAULT 'apartment',
 		status TEXT NOT NULL DEFAULT 'pending',
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -251,7 +252,10 @@ func TestRepositoryListApprovedFilters(t *testing.T) {
 	p3 := &Property{LandlordID: 1, Title: "Karen Mansion", Description: "D3", Location: "Karen, Nairobi", Price: 80000, Bedrooms: 4, Bathrooms: 3, Amenities: "swimming pool, garden, parking", Status: "approved"}
 	p4 := &Property{LandlordID: 1, Title: "Pending House", Description: "D4", Location: "Kilimani, Nairobi", Price: 25000, Bedrooms: 2, Bathrooms: 1, Amenities: "wifi", Status: "pending"}
 
-	for _, p := range []*Property{p1, p2, p3, p4} {
+	p5 := &Property{LandlordID: 1, Title: "Roysambu Bedsitter", Description: "D5", Location: "Roysambu, Nairobi", Price: 9000, Bedrooms: 0, Bathrooms: 1, PropertyType: "bedsitter", Status: "approved"}
+	p6 := &Property{LandlordID: 1, Title: "Parklands Studio", Description: "D6", Location: "Parklands, Nairobi", Price: 18000, Bedrooms: 0, Bathrooms: 1, PropertyType: "studio", Status: "approved"}
+
+	for _, p := range []*Property{p1, p2, p3, p4, p5, p6} {
 		if err := repo.Create(p); err != nil {
 			t.Fatalf("failed to create property: %v", err)
 		}
@@ -294,5 +298,17 @@ func TestRepositoryListApprovedFilters(t *testing.T) {
 	})
 	if err != nil || len(res) != 1 || res[0].Title != "Kilimani 2BHK" {
 		t.Errorf("combined filters failed, got %+v (err: %v)", res, err)
+	}
+
+	// 6. Filter by property type (bedsitter)
+	res, err = repo.ListApproved(FilterParams{PropertyType: "bedsitter"})
+	if err != nil || len(res) != 1 || res[0].Title != "Roysambu Bedsitter" {
+		t.Errorf("bedsitter filter failed, got %+v (err: %v)", res, err)
+	}
+
+	// 7. Filter by property type (studio)
+	res, err = repo.ListApproved(FilterParams{PropertyType: "studio"})
+	if err != nil || len(res) != 1 || res[0].Title != "Parklands Studio" {
+		t.Errorf("studio filter failed, got %+v (err: %v)", res, err)
 	}
 }
