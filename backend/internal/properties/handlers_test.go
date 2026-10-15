@@ -602,3 +602,60 @@ func TestPropertyLifecycleAndApprovedListing(t *testing.T) {
 		t.Errorf("expected 404 after property deletion, got %d", w.Code)
 	}
 }
+
+func TestHandlerListApprovedFilters(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	repo := NewRepository(db)
+	router := newPropertiesTestRouter(repo, testSecret)
+
+	p1 := &Property{LandlordID: 1, Title: "Mombasa Beach Villa", Description: "Ocean view", Location: "Nyali, Mombasa", Price: 50000, Bedrooms: 3, Bathrooms: 2, Amenities: "wifi, pool", Status: "approved"}
+	p2 := &Property{LandlordID: 1, Title: "Nairobi Studio", Description: "Cozy", Location: "Westlands, Nairobi", Price: 18000, Bedrooms: 1, Bathrooms: 1, Amenities: "wifi", Status: "approved"}
+	_ = repo.Create(p1)
+	_ = repo.Create(p2)
+
+	// Filter location
+	req := httptest.NewRequest(http.MethodGet, "/properties?location=mombasa", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	var res struct {
+		Properties []PropertyListItem `json:"properties"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &res); err != nil {
+		t.Fatalf("failed to decode json: %v", err)
+	}
+	if len(res.Properties) != 1 || res.Properties[0].Title != "Mombasa Beach Villa" {
+		t.Errorf("unexpected location filter response: %+v", res)
+	}
+
+	// Filter price range
+	req = httptest.NewRequest(http.MethodGet, "/properties?min_price=10000&max_price=20000", nil)
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+	res.Properties = nil
+	_ = json.Unmarshal(w.Body.Bytes(), &res)
+	if len(res.Properties) != 1 || res.Properties[0].Title != "Nairobi Studio" {
+		t.Errorf("unexpected price filter response: %+v", res)
+	}
+
+	// Invalid price error
+	req = httptest.NewRequest(http.MethodGet, "/properties?min_price=50000&max_price=20000", nil)
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for min > max price, got %d", w.Code)
+	}
+
+	req = httptest.NewRequest(http.MethodGet, "/properties?min_price=abc", nil)
+	w = httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for invalid min_price, got %d", w.Code)
+	}
+}

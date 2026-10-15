@@ -240,7 +240,75 @@ func (h *Handler) Mine(c *gin.Context) {
 }
 
 func (h *Handler) ListApproved(c *gin.Context) {
-	list, err := h.repo.ListApproved()
+	var filters FilterParams
+	hasFilter := false
+
+	if loc := strings.TrimSpace(c.Query("location")); loc != "" {
+		filters.Location = loc
+		hasFilter = true
+	}
+
+	if minPriceStr := strings.TrimSpace(c.Query("min_price")); minPriceStr != "" {
+		val, err := strconv.ParseInt(minPriceStr, 10, 64)
+		if err != nil || val < 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid min_price parameter"})
+			return
+		}
+		filters.MinPrice = &val
+		hasFilter = true
+	}
+
+	if maxPriceStr := strings.TrimSpace(c.Query("max_price")); maxPriceStr != "" {
+		val, err := strconv.ParseInt(maxPriceStr, 10, 64)
+		if err != nil || val < 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid max_price parameter"})
+			return
+		}
+		filters.MaxPrice = &val
+		hasFilter = true
+	}
+
+	if filters.MinPrice != nil && filters.MaxPrice != nil && *filters.MinPrice > *filters.MaxPrice {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "min_price cannot be greater than max_price"})
+		return
+	}
+
+	if bedsStr := strings.TrimSpace(c.Query("bedrooms")); bedsStr != "" {
+		val, err := strconv.Atoi(bedsStr)
+		if err != nil || val < 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid bedrooms parameter"})
+			return
+		}
+		filters.Bedrooms = &val
+		hasFilter = true
+	}
+
+	if bathsStr := strings.TrimSpace(c.Query("bathrooms")); bathsStr != "" {
+		val, err := strconv.Atoi(bathsStr)
+		if err != nil || val < 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid bathrooms parameter"})
+			return
+		}
+		filters.Bathrooms = &val
+		hasFilter = true
+	}
+
+	amenities := strings.TrimSpace(c.Query("amenities"))
+	if amenities == "" {
+		amenities = strings.TrimSpace(c.Query("amenity"))
+	}
+	if amenities != "" {
+		filters.Amenities = amenities
+		hasFilter = true
+	}
+
+	var list []Property
+	var err error
+	if hasFilter {
+		list, err = h.repo.ListApproved(filters)
+	} else {
+		list, err = h.repo.ListApproved()
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "could not load properties"})
 		return
