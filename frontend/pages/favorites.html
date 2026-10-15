@@ -50,6 +50,11 @@
         favLink.textContent = "My Favorites";
         navLinks.appendChild(favLink);
 
+        const viewingsLink = document.createElement("a");
+        viewingsLink.href = "my-viewings.html";
+        viewingsLink.textContent = "My Viewings";
+        navLinks.appendChild(viewingsLink);
+
         if (currentUser.role === "landlord") {
           const listLink = document.createElement("a");
           listLink.href = "create-property.html";
@@ -57,8 +62,12 @@
           const mineLink = document.createElement("a");
           mineLink.href = "my-listings.html";
           mineLink.textContent = "My Listings";
+          const inquiriesLink = document.createElement("a");
+          inquiriesLink.href = "landlord-viewings.html";
+          inquiriesLink.textContent = "Viewing Inquiries";
           navLinks.appendChild(listLink);
           navLinks.appendChild(mineLink);
+          navLinks.appendChild(inquiriesLink);
         }
 
         const logoutLink = document.createElement("a");
