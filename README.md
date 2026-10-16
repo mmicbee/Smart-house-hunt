@@ -260,17 +260,17 @@ suspended
 
 ### Search
 
-- [ ] Search by location
-- [ ] Filter by price
-- [ ] Filter by bedrooms
-- [ ] Filter by bathrooms
-- [ ] Filter by amenities
+- [x] Search by location
+- [x] Filter by price
+- [x] Filter by bedrooms
+- [x] Filter by bathrooms
+- [x] Filter by amenities
 
 ### Favorites
 
-- [ ] Save property
-- [ ] Remove property
-- [ ] View favorite properties
+- [x] Save property
+- [x] Remove property
+- [x] View favorite properties
 
 ---
 
@@ -292,11 +292,11 @@ Landlord Receives Request
 
 Features:
 
-- [ ] Create viewing request
-- [ ] View requests
-- [ ] Accept request
-- [ ] Reject request
-- [ ] Track request status
+- [x] Create viewing request
+- [x] View requests
+- [x] Accept request
+- [x] Reject request
+- [x] Track request status
 
 ---
 
@@ -597,14 +597,16 @@ Once the foundation is stable, advanced technologies can be introduced where the
 
 # Current Status
 
-**Milestone 2 (Property Listings) is complete.**
+**Milestone 4 (Viewing Requests) is complete.**
 
 - Authentication (Milestone 1): users can register, log in, receive a JWT, log out, and access protected endpoints. Passwords are bcrypt-hashed, JWTs are validated by middleware, and role-based authorization gates routes by role.
 - Property Listings (Milestone 2): landlords can create, edit, delete listings, upload property images, and view their own listings. Tenants can browse approved listings and view detailed property information and photos.
+- Search and Favorites (Milestone 3): tenants can search and filter approved properties by location, price range, bedrooms, bathrooms, and amenities. Authenticated users can save, check, view, and remove favorite listings with responsive UI controls.
+- Viewing Requests (Milestone 4): tenants can request in-person viewing visits with landlords for approved properties, specify preferred date/time and notes, avoid duplicate pending requests, and track or cancel pending requests. Landlords can view incoming viewing inquiries with tenant details, accept visits, and reject visits.
 
 Next development target:
 
-**Milestone 3 — Search and Favorites**
+**Milestone 5 — Admin Dashboard**
 
 ---
 

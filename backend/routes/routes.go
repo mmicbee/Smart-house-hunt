@@ -29,6 +29,8 @@ func Setup(router *gin.Engine, db *sql.DB, cfg *config.Config) {
 	api := router.Group("/api")
 	{
 		SetupPropertyRoutes(api, db, cfg)
+		SetupFavoriteRoutes(api, db, cfg)
+		SetupViewingRoutes(api, db, cfg)
 
 		api.GET("/me", middleware.RequireAuth(cfg.JWTSecret), func(c *gin.Context) {
 			userID := c.GetInt64(middleware.ContextUserID)

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Favorites - Smart House Hunt</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="../index.html">Smart House Hunt</a>
+      <nav id="nav-links">
+        <a href="properties.html">Find a House</a>
+        <a href="../index.html">Home</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="page-head">
+      <h1>My Favorite Houses</h1>
+      <a class="btn secondary" href="properties.html">Browse More Houses</a>
+    </div>
+
+    <p class="form-message" id="message"></p>
+    <div id="listings" class="listing-grid"></div>
+    <div id="empty" class="empty hidden">
+      <p>You haven't saved any houses to your favorites yet.</p>
+      <br>
+      <a class="btn" href="properties.html">Discover Houses</a>
+    </div>
+  </main>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/properties.js"></script>
+  <script>
+    const listingsEl = document.getElementById("listings");
+    const emptyEl = document.getElementById("empty");
+    const message = document.getElementById("message");
+    const navLinks = document.getElementById("nav-links");
+
+    const currentUser = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+
+    function renderNav() {
+      if (currentUser) {
+        const favLink = document.createElement("a");
+        favLink.href = "favorites.html";
+        favLink.textContent = "My Favorites";
+        navLinks.appendChild(favLink);
+
+        const viewingsLink = document.createElement("a");
+        viewingsLink.href = "my-viewings.html";
+        viewingsLink.textContent = "My Viewings";
+        navLinks.appendChild(viewingsLink);
+
+        if (currentUser.role === "landlord") {
+          const listLink = document.createElement("a");
+          listLink.href = "create-property.html";
+          listLink.textContent = "List a House";
+          const mineLink = document.createElement("a");
+          mineLink.href = "my-listings.html";
+          mineLink.textContent = "My Listings";
+          const inquiriesLink = document.createElement("a");
+          inquiriesLink.href = "landlord-viewings.html";
+          inquiriesLink.textContent = "Viewing Inquiries";
+          navLinks.appendChild(listLink);
+          navLinks.appendChild(mineLink);
+          navLinks.appendChild(inquiriesLink);
+        }
+
+        const logoutLink = document.createElement("a");
+        logoutLink.href = "#";
+        logoutLink.textContent = `Log out (${currentUser.name})`;
+        logoutLink.addEventListener("click", (e) => {
+          e.preventDefault();
+          logout();
+        });
+        navLinks.appendChild(logoutLink);
+      } else {
+        const loginLink = document.createElement("a");
+        loginLink.href = "login.html";
+        loginLink.textContent = "Login";
+        navLinks.appendChild(loginLink);
+      }
+    }
+
+    function showMessage(text, ok) {
+      if (!text) {
+        message.textContent = "";
+        message.className = "form-message";
+        return;
+      }
+      message.textContent = text;
+      message.className = ok ? "form-message success" : "form-message error";
+    }
+
+    function favoriteCard(property) {
+      const card = document.createElement("div");
+      card.className = "listing-card";
+      card.id = `fav-card-${property.id}`;
+
+      if (property.images && property.images.length > 0) {
+        const imgLink = document.createElement("a");
+        imgLink.href = `property-details.html?id=${property.id}`;
+        const img = document.createElement("img");
+        img.src = `${API_BASE_URL.replace("/api", "")}/${property.images[0].file_path}`;
+        img.alt = property.title;
+        img.className = "listing-card-img";
+        imgLink.appendChild(img);
+        card.appendChild(imgLink);
+      }
+
+      const title = document.createElement("h2");
+      const titleLink = document.createElement("a");
+      titleLink.href = `property-details.html?id=${property.id}`;
+      titleLink.textContent = property.title;
+      title.appendChild(titleLink);
+      card.appendChild(title);
+
+      const location = document.createElement("p");
+      location.className = "listing-meta";
+      location.textContent = property.location;
+      card.appendChild(location);
+
+      const price = document.createElement("p");
+      price.className = "listing-price";
+      price.textContent = `KES ${property.price.toLocaleString()} / month`;
+      card.appendChild(price);
+
+      const details = document.createElement("p");
+      details.className = "listing-meta";
+      details.textContent = `${property.bedrooms} bed, ${property.bathrooms} bath`;
+      card.appendChild(details);
+
+      if (property.amenities) {
+        const amenitiesP = document.createElement("p");
+        amenitiesP.className = "listing-meta";
+        amenitiesP.style.fontSize = "0.85rem";
+        amenitiesP.textContent = `Amenities: ${property.amenities}`;
+        card.appendChild(amenitiesP);
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "listing-card-actions";
+
+      const viewLink = document.createElement("a");
+      viewLink.className = "btn";
+      viewLink.href = `property-details.html?id=${property.id}`;
+      viewLink.textContent = "View Details";
+      actions.appendChild(viewLink);
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "btn-fav active";
+      removeBtn.innerHTML = "♥ Remove";
+      removeBtn.title = "Remove from favorites";
+
+      removeBtn.addEventListener("click", async () => {
+        try {
+          removeBtn.disabled = true;
+          await removeFavorite(property.id);
+          card.remove();
+          showMessage(`"${property.title}" removed from favorites`, true);
+
+          if (listingsEl.children.length === 0) {
+            emptyEl.classList.remove("hidden");
+          }
+        } catch (err) {
+          showMessage(err.message || "Failed to remove favorite", false);
+          removeBtn.disabled = false;
+        }
+      });
+
+      actions.appendChild(removeBtn);
+      card.appendChild(actions);
+
+      return card;
+    }
+
+    async function load() {
+      if (!currentUser) {
+        showMessage("Please log in to view your favorite properties.", false);
+        emptyEl.classList.remove("hidden");
+        return;
+      }
+
+      try {
+        const data = await listFavorites();
+        listingsEl.innerHTML = "";
+        const properties = (data && data.properties) || [];
+        emptyEl.classList.toggle("hidden", properties.length > 0);
+        properties.forEach((property) => {
+          listingsEl.appendChild(favoriteCard(property));
+        });
+      } catch (error) {
+        showMessage(error.message, false);
+      }
+    }
+
+    renderNav();
+    load();
+  </script>
+</body>
+</html>

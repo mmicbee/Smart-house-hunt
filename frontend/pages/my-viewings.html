@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Scheduled Viewings - Smart House Hunt</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav">
+      <a class="brand" href="../index.html">Smart House Hunt</a>
+      <nav id="nav-links">
+        <a href="properties.html">Find a House</a>
+        <a href="favorites.html">My Favorites</a>
+        <a href="my-viewings.html">My Viewings</a>
+        <a href="../index.html">Home</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container page">
+    <div class="page-head">
+      <div>
+        <h1>My Viewing Requests</h1>
+        <p class="listing-meta">Track visits you have scheduled to view properties in person.</p>
+      </div>
+      <a class="btn secondary" href="properties.html">Browse More Houses</a>
+    </div>
+
+    <p class="form-message" id="message"></p>
+
+    <div id="viewing-list" class="viewing-grid"></div>
+    <div id="empty-state" class="empty hidden">
+      <p>You have not requested any property viewings yet.</p>
+      <br>
+      <a class="btn" href="properties.html">Find a House to Visit</a>
+    </div>
+  </main>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/viewings.js"></script>
+  <script>
+    const user = getCurrentUser();
+    if (!user) {
+      window.location.href = "login.html";
+    }
+
+    const navLinks = document.getElementById("nav-links");
+    const listEl = document.getElementById("viewing-list");
+    const emptyEl = document.getElementById("empty-state");
+    const messageEl = document.getElementById("message");
+
+    function renderNav() {
+      if (user.role === "landlord") {
+        const listLink = document.createElement("a");
+        listLink.href = "create-property.html";
+        listLink.textContent = "List a House";
+        const mineLink = document.createElement("a");
+        mineLink.href = "my-listings.html";
+        mineLink.textContent = "My Listings";
+        const landlordViewingsLink = document.createElement("a");
+        landlordViewingsLink.href = "landlord-viewings.html";
+        landlordViewingsLink.textContent = "Viewing Inquiries";
+        navLinks.appendChild(listLink);
+        navLinks.appendChild(mineLink);
+        navLinks.appendChild(landlordViewingsLink);
+      }
+
+      const logoutLink = document.createElement("a");
+      logoutLink.href = "#";
+      logoutLink.textContent = `Log out (${user.name})`;
+      logoutLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        logout();
+      });
+      navLinks.appendChild(logoutLink);
+    }
+
+    function showMessage(text, ok) {
+      if (!text) {
+        messageEl.textContent = "";
+        messageEl.className = "form-message";
+        return;
+      }
+      messageEl.textContent = text;
+      messageEl.className = ok ? "form-message success" : "form-message error";
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return "N/A";
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? dateStr : d.toLocaleString([], {
+        weekday: "short",
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function renderCard(v) {
+      const card = document.createElement("div");
+      card.className = "viewing-card";
+
+      const info = document.createElement("div");
+      info.className = "viewing-card-info";
+
+      if (v.property_image) {
+        const img = document.createElement("img");
+        img.src = `${API_BASE_URL.replace("/api", "")}/${v.property_image}`;
+        img.alt = v.property_title;
+        img.className = "viewing-card-thumb";
+        info.appendChild(img);
+      }
+
+      const details = document.createElement("div");
+      details.className = "viewing-card-details";
+
+      const titleLink = document.createElement("a");
+      titleLink.href = `property-details.html?id=${v.property_id}`;
+      const title = document.createElement("h3");
+      title.textContent = v.property_title;
+      titleLink.appendChild(title);
+
+      const meta = document.createElement("p");
+      meta.className = "viewing-card-meta";
+      meta.textContent = `${v.property_location} • KES ${v.property_price ? v.property_price.toLocaleString() : "0"} / month`;
+
+      const visitTime = document.createElement("p");
+      visitTime.innerHTML = `<strong>Preferred Visit Time:</strong> ${formatDate(v.preferred_date)}`;
+
+      const landlordInfo = document.createElement("p");
+      landlordInfo.className = "listing-meta";
+      landlordInfo.innerHTML = `<strong>Landlord:</strong> ${v.landlord_name || "N/A"} (${v.landlord_email || "N/A"})`;
+
+      if (v.message) {
+        const msg = document.createElement("p");
+        msg.className = "listing-meta";
+        msg.style.marginTop = "4px";
+        msg.innerHTML = `<strong>Your Note:</strong> <em>"${v.message}"</em>`;
+        details.appendChild(titleLink);
+        details.appendChild(meta);
+        details.appendChild(visitTime);
+        details.appendChild(landlordInfo);
+        details.appendChild(msg);
+      } else {
+        details.appendChild(titleLink);
+        details.appendChild(meta);
+        details.appendChild(visitTime);
+        details.appendChild(landlordInfo);
+      }
+
+      info.appendChild(details);
+
+      const actions = document.createElement("div");
+      actions.className = "viewing-card-actions";
+
+      const statusBadge = document.createElement("span");
+      statusBadge.className = `badge badge-${v.status}`;
+      statusBadge.textContent = v.status;
+      actions.appendChild(statusBadge);
+
+      if (v.status === "pending") {
+        const cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.className = "btn danger small";
+        cancelBtn.textContent = "Cancel Request";
+        cancelBtn.onclick = async () => {
+          if (!confirm(`Are you sure you want to cancel your viewing request for "${v.property_title}"?`)) {
+            return;
+          }
+          try {
+            cancelBtn.disabled = true;
+            await cancelViewing(v.id);
+            showMessage("Viewing request cancelled.", true);
+            loadViewings();
+          } catch (err) {
+            showMessage(err.message || "Failed to cancel viewing request", false);
+            cancelBtn.disabled = false;
+          }
+        };
+        actions.appendChild(cancelBtn);
+      }
+
+      card.appendChild(info);
+      card.appendChild(actions);
+      return card;
+    }
+
+    async function loadViewings() {
+      try {
+        const res = await getMyViewings();
+        const list = res.viewing_requests || [];
+        listEl.innerHTML = "";
+
+        if (list.length === 0) {
+          emptyEl.classList.remove("hidden");
+          return;
+        }
+
+        emptyEl.classList.add("hidden");
+        list.forEach((v) => {
+          listEl.appendChild(renderCard(v));
+        });
+      } catch (err) {
+        showMessage(err.message || "Could not load your viewing requests", false);
+      }
+    }
+
+    renderNav();
+    loadViewings();
+  </script>
+</body>
+</html>

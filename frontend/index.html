@@ -59,6 +59,16 @@
       });
       authArea.appendChild(greeting);
       authArea.appendChild(logoutLink);
+      const favLink = document.createElement("a");
+      favLink.href = "pages/favorites.html";
+      favLink.textContent = "My Favorites";
+      const viewingsLink = document.createElement("a");
+      viewingsLink.href = "pages/my-viewings.html";
+      viewingsLink.textContent = "My Viewings";
+      authArea.appendChild(document.createTextNode(" "));
+      authArea.appendChild(favLink);
+      authArea.appendChild(document.createTextNode(" "));
+      authArea.appendChild(viewingsLink);
 
       if (user.role === "landlord") {
         const listLink = document.createElement("a");
@@ -67,10 +77,15 @@
         const mineLink = document.createElement("a");
         mineLink.href = "pages/my-listings.html";
         mineLink.textContent = "My Listings";
+        const inquiriesLink = document.createElement("a");
+        inquiriesLink.href = "pages/landlord-viewings.html";
+        inquiriesLink.textContent = "Inquiries";
         authArea.appendChild(document.createTextNode(" "));
         authArea.appendChild(listLink);
         authArea.appendChild(document.createTextNode(" "));
         authArea.appendChild(mineLink);
+        authArea.appendChild(document.createTextNode(" "));
+        authArea.appendChild(inquiriesLink);
       }
     } else {
       const loginLink = document.createElement("a");

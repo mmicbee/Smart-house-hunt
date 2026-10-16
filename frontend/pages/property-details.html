@@ -10,7 +10,7 @@
   <header class="site-header">
     <div class="container nav">
       <a class="brand" href="../index.html">Smart House Hunt</a>
-      <nav>
+      <nav id="nav-links">
         <a href="properties.html">Find a House</a>
         <a href="../index.html">Home</a>
       </nav>
@@ -26,8 +26,16 @@
 
     <div id="property-container" class="hidden">
       <div class="property-details-card">
-        <h1 id="prop-title"></h1>
-        <p class="listing-meta" id="prop-location"></p>
+        <div class="details-header">
+          <div>
+            <h1 id="prop-title"></h1>
+            <p class="listing-meta" id="prop-location"></p>
+          </div>
+          <button type="button" id="fav-toggle-btn" class="btn-fav hidden">
+            ♡ Save to Favorites
+          </button>
+        </div>
+
         <p class="property-details-price" id="prop-price"></p>
 
         <div id="prop-images" class="details-images"></div>
@@ -54,19 +62,108 @@
           <h3>Amenities</h3>
           <div id="prop-amenities"></div>
         </div>
+
+        <div id="viewing-section" class="viewing-box">
+          <h3>Schedule a House Viewing</h3>
+          <p id="viewing-info" class="listing-meta">Interested in this property? Request an in-person viewing visit with the landlord.</p>
+          <div id="viewing-form-container">
+            <form id="viewing-form" class="viewing-form">
+              <div class="form-group">
+                <label for="viewing-date">Preferred Date &amp; Time *</label>
+                <input type="datetime-local" id="viewing-date" required>
+              </div>
+              <div class="form-group">
+                <label for="viewing-notes">Message / Notes (optional)</label>
+                <textarea id="viewing-notes" rows="3" placeholder="e.g. I am available anytime after 2pm. Looking to move in soon."></textarea>
+              </div>
+              <button type="submit" class="btn" id="btn-request-viewing">Submit Viewing Request</button>
+            </form>
+          </div>
+          <div id="viewing-auth-prompt" class="hidden">
+            <p>Please <a href="login.html" class="btn secondary small">log in</a> to request a viewing for this property.</p>
+          </div>
+          <div id="viewing-landlord-prompt" class="hidden">
+            <p class="listing-meta">You are the landlord for this property.</p>
+          </div>
+          <div id="viewing-status-box" class="hidden" style="margin-top: 14px;">
+            <p id="viewing-status-text" class="listing-meta"></p>
+          </div>
+        </div>
       </div>
     </div>
   </main>
 
   <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
   <script src="../js/properties.js"></script>
+  <script src="../js/viewings.js"></script>
   <script>
     const messageEl = document.getElementById("message");
     const containerEl = document.getElementById("property-container");
+    const favToggleBtn = document.getElementById("fav-toggle-btn");
+    const navLinks = document.getElementById("nav-links");
+
+    const currentUser = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+    let isFavorited = false;
+
+    function renderNav() {
+        if (currentUser) {
+        const favLink = document.createElement("a");
+        favLink.href = "favorites.html";
+        favLink.textContent = "My Favorites";
+        navLinks.appendChild(favLink);
+
+        const viewingsLink = document.createElement("a");
+        viewingsLink.href = "my-viewings.html";
+        viewingsLink.textContent = "My Viewings";
+        navLinks.appendChild(viewingsLink);
+
+        if (currentUser.role === "landlord") {
+          const listLink = document.createElement("a");
+          listLink.href = "create-property.html";
+          listLink.textContent = "List a House";
+          const mineLink = document.createElement("a");
+          mineLink.href = "my-listings.html";
+          mineLink.textContent = "My Listings";
+          const landlordViewingsLink = document.createElement("a");
+          landlordViewingsLink.href = "landlord-viewings.html";
+          landlordViewingsLink.textContent = "Viewing Inquiries";
+          navLinks.appendChild(listLink);
+          navLinks.appendChild(mineLink);
+          navLinks.appendChild(landlordViewingsLink);
+        }
+
+        const logoutLink = document.createElement("a");
+        logoutLink.href = "#";
+        logoutLink.textContent = `Log out (${currentUser.name})`;
+        logoutLink.addEventListener("click", (e) => {
+          e.preventDefault();
+          logout();
+        });
+        navLinks.appendChild(logoutLink);
+      } else {
+        const loginLink = document.createElement("a");
+        loginLink.href = "login.html";
+        loginLink.textContent = "Login";
+        navLinks.appendChild(loginLink);
+      }
+    }
 
     function showMessage(text, ok) {
+      if (!text) {
+        messageEl.textContent = "";
+        messageEl.className = "form-message";
+        return;
+      }
       messageEl.textContent = text;
       messageEl.className = ok ? "form-message success" : "form-message error";
+    }
+
+    function updateFavButton(fav) {
+      isFavorited = fav;
+      favToggleBtn.className = isFavorited ? "btn-fav active" : "btn-fav";
+      favToggleBtn.innerHTML = isFavorited ? "♥ Saved to Favorites" : "♡ Save to Favorites";
+      favToggleBtn.title = isFavorited ? "Remove from favorites" : "Save to favorites";
     }
 
     async function loadDetails() {
@@ -117,12 +214,96 @@
           document.getElementById("amenities-section").style.display = "none";
         }
 
+        if (currentUser) {
+          favToggleBtn.classList.remove("hidden");
+          try {
+            const favCheck = await checkFavorite(id);
+            updateFavButton(Boolean(favCheck && favCheck.is_favorite));
+          } catch (e) {
+            // Ignore favorite check error
+          }
+
+          favToggleBtn.onclick = async () => {
+            try {
+              favToggleBtn.disabled = true;
+              if (isFavorited) {
+                await removeFavorite(id);
+                updateFavButton(false);
+                showMessage("Removed from favorites", true);
+              } else {
+                await addFavorite(id);
+                updateFavButton(true);
+                showMessage("Saved to favorites", true);
+              }
+            } catch (err) {
+              showMessage(err.message || "Failed to update favorite", false);
+            } finally {
+              favToggleBtn.disabled = false;
+            }
+          };
+        }
+
+        const viewingForm = document.getElementById("viewing-form");
+        const viewingFormContainer = document.getElementById("viewing-form-container");
+        const viewingAuthPrompt = document.getElementById("viewing-auth-prompt");
+        const viewingLandlordPrompt = document.getElementById("viewing-landlord-prompt");
+        const viewingStatusBox = document.getElementById("viewing-status-box");
+        const viewingStatusText = document.getElementById("viewing-status-text");
+
+        if (!currentUser) {
+          viewingFormContainer.style.display = "none";
+          viewingAuthPrompt.classList.remove("hidden");
+        } else if (currentUser.id === property.landlord_id) {
+          viewingFormContainer.style.display = "none";
+          viewingLandlordPrompt.classList.remove("hidden");
+        } else {
+          try {
+            const myViewings = await getMyViewings();
+            const existing = (myViewings.viewing_requests || []).find(v => v.property_id === property.id && (v.status === "pending" || v.status === "accepted"));
+            if (existing) {
+              viewingFormContainer.style.display = "none";
+              viewingStatusBox.classList.remove("hidden");
+              const formattedDate = new Date(existing.preferred_date).toLocaleString();
+              viewingStatusText.innerHTML = `<strong>Status:</strong> Your viewing request is <strong><span class="badge badge-${existing.status}">${existing.status}</span></strong> for <strong>${formattedDate}</strong>. <a href="my-viewings.html" style="color: #2563eb; text-decoration: underline; margin-left: 8px;">View all viewings &rarr;</a>`;
+            }
+          } catch (e) {
+            // Ignore viewing check errors
+          }
+
+          viewingForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const dateInput = document.getElementById("viewing-date");
+            const notesInput = document.getElementById("viewing-notes");
+            const submitBtn = document.getElementById("btn-request-viewing");
+
+            if (!dateInput.value) {
+              showMessage("Please select a preferred date and time.", false);
+              return;
+            }
+
+            try {
+              submitBtn.disabled = true;
+              await createViewingRequest(property.id, dateInput.value, notesInput.value);
+              showMessage("Viewing request sent successfully! The landlord will review it.", true);
+              viewingFormContainer.style.display = "none";
+              viewingStatusBox.classList.remove("hidden");
+              const formattedDate = new Date(dateInput.value).toLocaleString();
+              viewingStatusText.innerHTML = `<strong>Status:</strong> Viewing requested for <strong>${formattedDate}</strong> (<span class="badge badge-pending">pending</span>). <a href="my-viewings.html" style="color: #2563eb; text-decoration: underline; margin-left: 8px;">Track your requests &rarr;</a>`;
+            } catch (err) {
+              showMessage(err.message || "Failed to submit viewing request", false);
+            } finally {
+              submitBtn.disabled = false;
+            }
+          };
+        }
+
         containerEl.classList.remove("hidden");
       } catch (error) {
         showMessage(error.message || "Property not found.", false);
       }
     }
 
+    renderNav();
     loadDetails();
   </script>
 </body>

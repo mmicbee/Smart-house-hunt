@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Available Houses - Smart House Hunt</title>
+  <title>Find Houses - Smart House Hunt</title>
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body>
   <header class="site-header">
     <div class="container nav">
       <a class="brand" href="../index.html">Smart House Hunt</a>
-      <nav>
+      <nav id="nav-links">
         <a href="properties.html">Find a House</a>
         <a href="../index.html">Home</a>
       </nav>
@@ -19,21 +19,125 @@
 
   <main class="container page">
     <div class="page-head">
-      <h1>Available Houses</h1>
+      <h1>Find Your Next House</h1>
       <a class="btn secondary" href="../index.html">Back Home</a>
     </div>
+
+    <!-- Search & Filters -->
+    <div class="search-filter-card">
+      <form id="filter-form">
+        <div class="search-filter-grid">
+          <div class="search-field">
+            <label for="location">Location</label>
+            <input type="text" id="location" name="location" placeholder="e.g. Nairobi, Kilimani">
+          </div>
+          <div class="search-field">
+            <label for="min_price">Min Price (KES)</label>
+            <input type="number" id="min_price" name="min_price" placeholder="e.g. 10000" min="0">
+          </div>
+          <div class="search-field">
+            <label for="max_price">Max Price (KES)</label>
+            <input type="number" id="max_price" name="max_price" placeholder="e.g. 50000" min="0">
+          </div>
+          <div class="search-field">
+            <label for="bedrooms">Bedrooms</label>
+            <select id="bedrooms" name="bedrooms">
+              <option value="">Any</option>
+              <option value="1">1 Bedroom</option>
+              <option value="2">2 Bedrooms</option>
+              <option value="3">3 Bedrooms</option>
+              <option value="4">4+ Bedrooms</option>
+            </select>
+          </div>
+          <div class="search-field">
+            <label for="bathrooms">Bathrooms</label>
+            <select id="bathrooms" name="bathrooms">
+              <option value="">Any</option>
+              <option value="1">1 Bathroom</option>
+              <option value="2">2 Bathrooms</option>
+              <option value="3">3+ Bathrooms</option>
+            </select>
+          </div>
+          <div class="search-field">
+            <label for="amenities">Amenities</label>
+            <input type="text" id="amenities" name="amenities" placeholder="e.g. wifi, parking">
+          </div>
+          <div class="search-actions">
+            <button type="submit" class="btn">Filter</button>
+            <button type="button" id="clear-filters" class="btn secondary">Reset</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
     <p class="form-message" id="message"></p>
     <div id="listings" class="listing-grid"></div>
-    <p id="empty" class="empty hidden">No houses currently available.</p>
+    <p id="empty" class="empty hidden">No houses found matching your criteria.</p>
   </main>
+
   <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
   <script src="../js/properties.js"></script>
   <script>
     const listingsEl = document.getElementById("listings");
     const emptyEl = document.getElementById("empty");
     const message = document.getElementById("message");
+    const filterForm = document.getElementById("filter-form");
+    const clearBtn = document.getElementById("clear-filters");
+    const navLinks = document.getElementById("nav-links");
+
+    let userFavorites = new Set();
+    const currentUser = typeof getCurrentUser === "function" ? getCurrentUser() : null;
+
+    function renderNav() {
+      if (currentUser) {
+        const favLink = document.createElement("a");
+        favLink.href = "favorites.html";
+        favLink.textContent = "My Favorites";
+        navLinks.appendChild(favLink);
+
+        const viewingsLink = document.createElement("a");
+        viewingsLink.href = "my-viewings.html";
+        viewingsLink.textContent = "My Viewings";
+        navLinks.appendChild(viewingsLink);
+
+        if (currentUser.role === "landlord") {
+          const listLink = document.createElement("a");
+          listLink.href = "create-property.html";
+          listLink.textContent = "List a House";
+          const mineLink = document.createElement("a");
+          mineLink.href = "my-listings.html";
+          mineLink.textContent = "My Listings";
+          const inquiriesLink = document.createElement("a");
+          inquiriesLink.href = "landlord-viewings.html";
+          inquiriesLink.textContent = "Viewing Inquiries";
+          navLinks.appendChild(listLink);
+          navLinks.appendChild(mineLink);
+          navLinks.appendChild(inquiriesLink);
+        }
+
+        const logoutLink = document.createElement("a");
+        logoutLink.href = "#";
+        logoutLink.textContent = `Log out (${currentUser.name})`;
+        logoutLink.addEventListener("click", (e) => {
+          e.preventDefault();
+          logout();
+        });
+        navLinks.appendChild(logoutLink);
+      } else {
+        const loginLink = document.createElement("a");
+        loginLink.href = "login.html";
+        loginLink.textContent = "Login";
+        navLinks.appendChild(loginLink);
+      }
+    }
 
     function showMessage(text, ok) {
+      if (!text) {
+        message.textContent = "";
+        message.className = "form-message";
+        return;
+      }
       message.textContent = text;
       message.className = ok ? "form-message success" : "form-message error";
     }
@@ -75,18 +179,78 @@
       details.textContent = `${property.bedrooms} bed, ${property.bathrooms} bath`;
       card.appendChild(details);
 
+      if (property.amenities) {
+        const amenitiesP = document.createElement("p");
+        amenitiesP.className = "listing-meta";
+        amenitiesP.style.fontSize = "0.85rem";
+        amenitiesP.textContent = `Amenities: ${property.amenities}`;
+        card.appendChild(amenitiesP);
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "listing-card-actions";
+
       const viewLink = document.createElement("a");
       viewLink.className = "btn";
       viewLink.href = `property-details.html?id=${property.id}`;
       viewLink.textContent = "View Details";
-      card.appendChild(viewLink);
+      actions.appendChild(viewLink);
 
+      if (currentUser) {
+        const isFav = userFavorites.has(property.id);
+        const favBtn = document.createElement("button");
+        favBtn.type = "button";
+        favBtn.className = isFav ? "btn-fav active" : "btn-fav";
+        favBtn.innerHTML = isFav ? "♥ Saved" : "♡ Save";
+        favBtn.title = isFav ? "Remove from favorites" : "Save to favorites";
+
+        favBtn.addEventListener("click", async () => {
+          try {
+            favBtn.disabled = true;
+            if (userFavorites.has(property.id)) {
+              await removeFavorite(property.id);
+              userFavorites.delete(property.id);
+              favBtn.className = "btn-fav";
+              favBtn.innerHTML = "♡ Save";
+              favBtn.title = "Save to favorites";
+              showMessage("Removed from favorites", true);
+            } else {
+              await addFavorite(property.id);
+              userFavorites.add(property.id);
+              favBtn.className = "btn-fav active";
+              favBtn.innerHTML = "♥ Saved";
+              favBtn.title = "Remove from favorites";
+              showMessage("Saved to favorites", true);
+            }
+          } catch (err) {
+            showMessage(err.message || "Failed to update favorite", false);
+          } finally {
+            favBtn.disabled = false;
+          }
+        });
+
+        actions.appendChild(favBtn);
+      }
+
+      card.appendChild(actions);
       return card;
     }
 
-    async function load() {
+    async function load(filters = {}) {
       try {
-        const data = await loadProperties();
+        showMessage("", true);
+        if (currentUser && userFavorites.size === 0) {
+          try {
+            const favData = await getFavoriteIds();
+            if (favData && favData.favorite_ids) {
+              userFavorites = new Set(favData.favorite_ids);
+            }
+          } catch (e) {
+            // Ignore if favorites can't load
+          }
+        }
+
+        const data = await loadProperties(filters);
         listingsEl.innerHTML = "";
         const properties = (data && data.properties) || [];
         emptyEl.classList.toggle("hidden", properties.length > 0);
@@ -98,7 +262,27 @@
       }
     }
 
-    load();
+    filterForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const formData = new FormData(filterForm);
+      const filters = {
+        location: formData.get("location"),
+        min_price: formData.get("min_price"),
+        max_price: formData.get("max_price"),
+        bedrooms: formData.get("bedrooms"),
+        bathrooms: formData.get("bathrooms"),
+        amenities: formData.get("amenities")
+      };
+      load(filters);
+    });
+
+    clearBtn.addEventListener("click", () => {
+      filterForm.reset();
+      load({});
+    });
+
+    renderNav();
+    load({});
   </script>
 </body>
 </html>

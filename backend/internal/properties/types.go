@@ -44,3 +44,12 @@ func toResponse(property *Property) PropertyResponse {
 		CreatedAt:   property.CreatedAt,
 	}
 }
+
+type FilterParams struct {
+	Location  string
+	MinPrice  *int64
+	MaxPrice  *int64
+	Bedrooms  *int
+	Bathrooms *int
+	Amenities string
+}

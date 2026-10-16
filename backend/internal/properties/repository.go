@@ -1,6 +1,9 @@
 package properties
 
-import "database/sql"
+import (
+	"database/sql"
+	"strings"
+)
 
 type Repository struct {
 	db *sql.DB
@@ -104,13 +107,46 @@ func (r *Repository) ListByLandlord(landlordID int64) ([]Property, error) {
 	return list, rows.Err()
 }
 
-func (r *Repository) ListApproved() ([]Property, error) {
-	rows, err := r.db.Query(`
-		SELECT `+propertyColumns+`
-		FROM properties
-		WHERE status = 'approved'
-		ORDER BY id DESC
-	`)
+func (r *Repository) ListApproved(filters ...FilterParams) ([]Property, error) {
+	query := `SELECT ` + propertyColumns + ` FROM properties WHERE status = 'approved'`
+	var args []any
+
+	if len(filters) > 0 {
+		f := filters[0]
+		if loc := strings.TrimSpace(f.Location); loc != "" {
+			query += " AND LOWER(location) LIKE ?"
+			args = append(args, "%"+strings.ToLower(loc)+"%")
+		}
+		if f.MinPrice != nil {
+			query += " AND price >= ?"
+			args = append(args, *f.MinPrice)
+		}
+		if f.MaxPrice != nil {
+			query += " AND price <= ?"
+			args = append(args, *f.MaxPrice)
+		}
+		if f.Bedrooms != nil {
+			query += " AND bedrooms = ?"
+			args = append(args, *f.Bedrooms)
+		}
+		if f.Bathrooms != nil {
+			query += " AND bathrooms = ?"
+			args = append(args, *f.Bathrooms)
+		}
+		if am := strings.TrimSpace(f.Amenities); am != "" {
+			for _, item := range strings.Split(am, ",") {
+				item = strings.TrimSpace(item)
+				if item != "" {
+					query += " AND LOWER(amenities) LIKE ?"
+					args = append(args, "%"+strings.ToLower(item)+"%")
+				}
+			}
+		}
+	}
+
+	query += " ORDER BY id DESC"
+
+	rows, err := r.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -240,3 +240,59 @@ func TestRepositoryImages(t *testing.T) {
 		t.Errorf("expected 0 images, got %d", len(emptyImgs))
 	}
 }
+
+func TestRepositoryListApprovedFilters(t *testing.T) {
+	db := setupTestDB(t)
+	defer db.Close()
+	repo := NewRepository(db)
+
+	p1 := &Property{LandlordID: 1, Title: "Kilimani 2BHK", Description: "D1", Location: "Kilimani, Nairobi", Price: 35000, Bedrooms: 2, Bathrooms: 2, Amenities: "wifi, parking", Status: "approved"}
+	p2 := &Property{LandlordID: 1, Title: "Westlands 1BHK", Description: "D2", Location: "Westlands, Nairobi", Price: 20000, Bedrooms: 1, Bathrooms: 1, Amenities: "wifi", Status: "approved"}
+	p3 := &Property{LandlordID: 1, Title: "Karen Mansion", Description: "D3", Location: "Karen, Nairobi", Price: 80000, Bedrooms: 4, Bathrooms: 3, Amenities: "swimming pool, garden, parking", Status: "approved"}
+	p4 := &Property{LandlordID: 1, Title: "Pending House", Description: "D4", Location: "Kilimani, Nairobi", Price: 25000, Bedrooms: 2, Bathrooms: 1, Amenities: "wifi", Status: "pending"}
+
+	for _, p := range []*Property{p1, p2, p3, p4} {
+		if err := repo.Create(p); err != nil {
+			t.Fatalf("failed to create property: %v", err)
+		}
+	}
+
+	// 1. Filter by location
+	res, err := repo.ListApproved(FilterParams{Location: "karen"})
+	if err != nil || len(res) != 1 || res[0].Title != "Karen Mansion" {
+		t.Errorf("location filter failed, got %+v (err: %v)", res, err)
+	}
+
+	// 2. Filter by price range
+	minP := int64(20000)
+	maxP := int64(40000)
+	res, err = repo.ListApproved(FilterParams{MinPrice: &minP, MaxPrice: &maxP})
+	if err != nil || len(res) != 2 {
+		t.Errorf("price range filter failed, expected 2 got %d (err: %v)", len(res), err)
+	}
+
+	// 3. Filter by bedrooms and bathrooms
+	beds := 2
+	baths := 2
+	res, err = repo.ListApproved(FilterParams{Bedrooms: &beds, Bathrooms: &baths})
+	if err != nil || len(res) != 1 || res[0].Title != "Kilimani 2BHK" {
+		t.Errorf("bedrooms/bathrooms filter failed, got %+v (err: %v)", res, err)
+	}
+
+	// 4. Filter by amenities
+	res, err = repo.ListApproved(FilterParams{Amenities: "parking"})
+	if err != nil || len(res) != 2 {
+		t.Errorf("amenities filter failed, expected 2 got %d (err: %v)", len(res), err)
+	}
+
+	// 5. Combined filters
+	res, err = repo.ListApproved(FilterParams{
+		Location:  "nairobi",
+		MaxPrice:  &maxP,
+		Bedrooms:  &beds,
+		Amenities: "wifi",
+	})
+	if err != nil || len(res) != 1 || res[0].Title != "Kilimani 2BHK" {
+		t.Errorf("combined filters failed, got %+v (err: %v)", res, err)
+	}
+}
