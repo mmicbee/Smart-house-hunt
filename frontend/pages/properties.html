@@ -25,11 +25,42 @@
 
     <!-- Search & Filters -->
     <div class="search-filter-card">
+      <div class="quick-filter-chips" id="quick-chips">
+        <button type="button" class="chip-btn active" data-type="" data-beds="">All Houses</button>
+        <button type="button" class="chip-btn" data-type="bedsitter" data-beds="">Bedsitters</button>
+        <button type="button" class="chip-btn" data-type="studio" data-beds="">Studio Apartments</button>
+        <button type="button" class="chip-btn" data-type="" data-beds="1">1 Bedroom</button>
+        <button type="button" class="chip-btn" data-type="" data-beds="2">2 Bedrooms</button>
+        <button type="button" class="chip-btn" data-type="" data-beds="3">3 Bedrooms</button>
+        <button type="button" class="chip-btn" data-type="" data-beds="4+">4+ Bedrooms</button>
+        <button type="button" class="chip-btn" data-type="house" data-beds="">Standalone Houses</button>
+      </div>
       <form id="filter-form">
         <div class="search-filter-grid">
           <div class="search-field">
             <label for="location">Location</label>
             <input type="text" id="location" name="location" placeholder="e.g. Nairobi, Kilimani">
+          </div>
+          <div class="search-field">
+            <label for="property_type">House Type</label>
+            <select id="property_type" name="property_type">
+              <option value="">All Types</option>
+              <option value="bedsitter">Bedsitter</option>
+              <option value="studio">Studio Apartment</option>
+              <option value="apartment">Apartment</option>
+              <option value="house">Standalone House / Villa</option>
+            </select>
+          </div>
+          <div class="search-field">
+            <label for="bedrooms">Bedrooms</label>
+            <select id="bedrooms" name="bedrooms">
+              <option value="">Any Bedrooms</option>
+              <option value="0">0 Bedrooms (Bedsitter / Studio)</option>
+              <option value="1">1 Bedroom</option>
+              <option value="2">2 Bedrooms</option>
+              <option value="3">3 Bedrooms</option>
+              <option value="4+">4+ Bedrooms</option>
+            </select>
           </div>
           <div class="search-field">
             <label for="min_price">Min Price (KES)</label>
@@ -38,16 +69,6 @@
           <div class="search-field">
             <label for="max_price">Max Price (KES)</label>
             <input type="number" id="max_price" name="max_price" placeholder="e.g. 50000" min="0">
-          </div>
-          <div class="search-field">
-            <label for="bedrooms">Bedrooms</label>
-            <select id="bedrooms" name="bedrooms">
-              <option value="">Any</option>
-              <option value="1">1 Bedroom</option>
-              <option value="2">2 Bedrooms</option>
-              <option value="3">3 Bedrooms</option>
-              <option value="4">4+ Bedrooms</option>
-            </select>
           </div>
           <div class="search-field">
             <label for="bathrooms">Bathrooms</label>
@@ -116,6 +137,13 @@
           navLinks.appendChild(inquiriesLink);
         }
 
+        if (currentUser.role === "admin") {
+          const adminLink = document.createElement("a");
+          adminLink.href = "admin-dashboard.html";
+          adminLink.textContent = "Admin Dashboard";
+          navLinks.appendChild(adminLink);
+        }
+
         const logoutLink = document.createElement("a");
         logoutLink.href = "#";
         logoutLink.textContent = `Log out (${currentUser.name})`;
@@ -146,16 +174,29 @@
       const card = document.createElement("div");
       card.className = "listing-card";
 
-      if (property.images && property.images.length > 0) {
-        const imgLink = document.createElement("a");
-        imgLink.href = `property-details.html?id=${property.id}`;
-        const img = document.createElement("img");
-        img.src = `${API_BASE_URL.replace("/api", "")}/${property.images[0].file_path}`;
-        img.alt = property.title;
-        img.className = "listing-card-img";
-        imgLink.appendChild(img);
-        card.appendChild(imgLink);
-      }
+      // Always show house image (uploaded or placeholder)
+      const imgLink = document.createElement("a");
+      imgLink.href = `property-details.html?id=${property.id}`;
+      const img = document.createElement("img");
+      img.src = getPropertyImageUrl(property, "../");
+      img.alt = property.title;
+      img.className = "listing-card-img";
+      img.onerror = function() {
+        this.onerror = null;
+        this.src = "../assets/images/default-house.svg";
+      };
+      imgLink.appendChild(img);
+      card.appendChild(imgLink);
+
+      // House Type Badge
+      const metaRow = document.createElement("div");
+      metaRow.className = "listing-type-meta";
+      const typeBadge = document.createElement("span");
+      const propType = (property.property_type || "apartment").toLowerCase();
+      typeBadge.className = `badge badge-type badge-${propType}`;
+      typeBadge.textContent = getPropertyTypeLabel(property.property_type);
+      metaRow.appendChild(typeBadge);
+      card.appendChild(metaRow);
 
       const title = document.createElement("h2");
       const titleLink = document.createElement("a");
@@ -176,7 +217,9 @@
 
       const details = document.createElement("p");
       details.className = "listing-meta";
-      details.textContent = `${property.bedrooms} bed, ${property.bathrooms} bath`;
+      const bedText = getBedroomDisplay(property);
+      const bathText = `${property.bathrooms} ${property.bathrooms === 1 ? 'bath' : 'baths'}`;
+      details.textContent = `${bedText} • ${bathText}`;
       card.appendChild(details);
 
       if (property.amenities) {
@@ -267,18 +310,60 @@
       const formData = new FormData(filterForm);
       const filters = {
         location: formData.get("location"),
+        property_type: formData.get("property_type"),
         min_price: formData.get("min_price"),
         max_price: formData.get("max_price"),
         bedrooms: formData.get("bedrooms"),
         bathrooms: formData.get("bathrooms"),
         amenities: formData.get("amenities")
       };
+      // Sync chips state
+      updateActiveChip(filters.property_type, filters.bedrooms);
       load(filters);
     });
 
     clearBtn.addEventListener("click", () => {
       filterForm.reset();
+      updateActiveChip("", "");
       load({});
+    });
+
+    // Quick chips handler
+    const chipBtns = document.querySelectorAll(".chip-btn");
+    function updateActiveChip(type, beds) {
+      chipBtns.forEach((btn) => {
+        const bType = btn.getAttribute("data-type") || "";
+        const bBeds = btn.getAttribute("data-beds") || "";
+        if (type === bType && beds === bBeds) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      });
+    }
+
+    chipBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        chipBtns.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        const type = btn.getAttribute("data-type") || "";
+        const beds = btn.getAttribute("data-beds") || "";
+
+        document.getElementById("property_type").value = type;
+        document.getElementById("bedrooms").value = beds;
+
+        const formData = new FormData(filterForm);
+        const filters = {
+          location: formData.get("location"),
+          property_type: type,
+          bedrooms: beds,
+          min_price: formData.get("min_price"),
+          max_price: formData.get("max_price"),
+          bathrooms: formData.get("bathrooms"),
+          amenities: formData.get("amenities")
+        };
+        load(filters);
+      });
     });
 
     renderNav();

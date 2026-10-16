@@ -28,6 +28,9 @@ async function loadProperties(filters = {}) {
   if (filters.location && filters.location.trim()) {
     params.set("location", filters.location.trim());
   }
+  if (filters.property_type && filters.property_type.trim()) {
+    params.set("property_type", filters.property_type.trim());
+  }
   if (filters.min_price !== undefined && filters.min_price !== "") {
     params.set("min_price", filters.min_price);
   }
@@ -46,6 +49,52 @@ async function loadProperties(filters = {}) {
 
   const query = params.toString();
   return apiRequest(query ? `/properties?${query}` : "/properties");
+}
+
+function getPropertyTypeLabel(propertyType) {
+  const t = (propertyType || "").toLowerCase();
+  switch (t) {
+    case "bedsitter":
+      return "Bedsitter";
+    case "studio":
+      return "Studio Apartment";
+    case "house":
+      return "Standalone House";
+    case "apartment":
+    default:
+      return "Apartment";
+  }
+}
+
+function getBedroomDisplay(property) {
+  const type = (property.property_type || "").toLowerCase();
+  const beds = parseInt(property.bedrooms, 10);
+  if (type === "bedsitter") {
+    return "Bedsitter (Single room)";
+  }
+  if (type === "studio") {
+    return "Studio (Open plan)";
+  }
+  if (beds === 0) {
+    return "0 Bedrooms";
+  }
+  if (beds === 1) {
+    return "1 Bedroom";
+  }
+  return `${beds} Bedrooms`;
+}
+
+function getPropertyImageUrl(property, basePath = "") {
+  if (property && property.images && property.images.length > 0) {
+    const imgPath = property.images[0].file_path;
+    if (imgPath.startsWith("http")) return imgPath;
+    return `${API_BASE_URL.replace("/api", "")}/${imgPath}`;
+  }
+  const type = (property && property.property_type ? property.property_type : "").toLowerCase();
+  if (type === "bedsitter") return `${basePath}assets/images/bedsitter.svg`;
+  if (type === "studio") return `${basePath}assets/images/studio.svg`;
+  if (type === "house") return `${basePath}assets/images/house.svg`;
+  return `${basePath}assets/images/apartment.svg`;
 }
 
 async function getProperty(id) {

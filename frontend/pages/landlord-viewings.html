@@ -52,6 +52,13 @@
     const messageEl = document.getElementById("message");
 
     function renderNav() {
+      if (user.role === "admin") {
+        const adminLink = document.createElement("a");
+        adminLink.href = "admin-dashboard.html";
+        adminLink.textContent = "Admin Dashboard";
+        navLinks.appendChild(adminLink);
+      }
+
       const logoutLink = document.createElement("a");
       logoutLink.href = "#";
       logoutLink.textContent = `Log out (${user.name})`;

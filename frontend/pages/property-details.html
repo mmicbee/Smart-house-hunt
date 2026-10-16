@@ -28,6 +28,10 @@
       <div class="property-details-card">
         <div class="details-header">
           <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+              <span id="prop-type-badge" class="badge badge-type"></span>
+              <span class="badge badge-approved" id="prop-status"></span>
+            </div>
             <h1 id="prop-title"></h1>
             <p class="listing-meta" id="prop-location"></p>
           </div>
@@ -42,6 +46,10 @@
 
         <div class="property-features">
           <div class="feature-item">
+            <span class="feature-label">House Type</span>
+            <span class="feature-value" id="prop-type"></span>
+          </div>
+          <div class="feature-item">
             <span class="feature-label">Bedrooms</span>
             <span class="feature-value" id="prop-bedrooms"></span>
           </div>
@@ -50,8 +58,8 @@
             <span class="feature-value" id="prop-bathrooms"></span>
           </div>
           <div class="feature-item">
-            <span class="feature-label">Status</span>
-            <span class="feature-value badge badge-approved" id="prop-status"></span>
+            <span class="feature-label">Availability</span>
+            <span class="feature-value" style="color: #15803d; font-weight: 700;">Ready for Rent</span>
           </div>
         </div>
 
@@ -133,6 +141,13 @@
           navLinks.appendChild(landlordViewingsLink);
         }
 
+        if (currentUser.role === "admin") {
+          const adminLink = document.createElement("a");
+          adminLink.href = "admin-dashboard.html";
+          adminLink.textContent = "Admin Dashboard";
+          navLinks.appendChild(adminLink);
+        }
+
         const logoutLink = document.createElement("a");
         logoutLink.href = "#";
         logoutLink.textContent = `Log out (${currentUser.name})`;
@@ -182,8 +197,19 @@
         document.getElementById("prop-title").textContent = property.title;
         document.getElementById("prop-location").textContent = property.location;
         document.getElementById("prop-price").textContent = `KES ${property.price.toLocaleString()} / month`;
-        document.getElementById("prop-bedrooms").textContent = property.bedrooms;
-        document.getElementById("prop-bathrooms").textContent = property.bathrooms;
+        
+        const typeLabel = getPropertyTypeLabel(property.property_type);
+        const propTypeEl = document.getElementById("prop-type");
+        if (propTypeEl) propTypeEl.textContent = typeLabel;
+        const propTypeBadge = document.getElementById("prop-type-badge");
+        if (propTypeBadge) {
+          const pt = (property.property_type || "apartment").toLowerCase();
+          propTypeBadge.className = `badge badge-type badge-${pt}`;
+          propTypeBadge.textContent = typeLabel;
+        }
+
+        document.getElementById("prop-bedrooms").textContent = getBedroomDisplay(property);
+        document.getElementById("prop-bathrooms").textContent = `${property.bathrooms} ${property.bathrooms === 1 ? 'Bathroom' : 'Bathrooms'}`;
         document.getElementById("prop-status").textContent = property.status;
         document.getElementById("prop-description").textContent = property.description;
 
@@ -197,7 +223,17 @@
           imagesEl.appendChild(imgEl);
         });
         if (images.length === 0) {
-          imagesEl.style.display = "none";
+          const placeholderEl = document.createElement("img");
+          placeholderEl.src = getPropertyImageUrl(property, "../");
+          placeholderEl.alt = property.title;
+          placeholderEl.onerror = function() {
+            this.onerror = null;
+            this.src = "../assets/images/default-house.svg";
+          };
+          imagesEl.appendChild(placeholderEl);
+          imagesEl.style.display = "grid";
+        } else {
+          imagesEl.style.display = "grid";
         }
 
         const amenitiesEl = document.getElementById("prop-amenities");

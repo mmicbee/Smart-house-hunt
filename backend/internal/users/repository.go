@@ -34,9 +34,10 @@ func (r *Repository) RoleByID(id int64) (string, error) {
 
 func (r *Repository) List() ([]User, error) {
 	rows, err := r.db.Query(`
-		SELECT id, role_id, name, email, created_at, updated_at
-		FROM users
-		ORDER BY id
+		SELECT u.id, u.role_id, COALESCE(r.name, ''), u.name, u.email, COALESCE(u.status, 'active'), u.created_at, u.updated_at
+		FROM users u
+		LEFT JOIN roles r ON u.role_id = r.id
+		ORDER BY u.id
 	`)
 	if err != nil {
 		return nil, err
@@ -49,8 +50,10 @@ func (r *Repository) List() ([]User, error) {
 		if err := rows.Scan(
 			&user.ID,
 			&user.RoleID,
+			&user.RoleName,
 			&user.Name,
 			&user.Email,
+			&user.Status,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 		); err != nil {
@@ -63,9 +66,12 @@ func (r *Repository) List() ([]User, error) {
 }
 
 func (r *Repository) Create(user *User) error {
+	if user.Status == "" {
+		user.Status = "active"
+	}
 	query := `
-	INSERT INTO users (role_id, name, email, password)
-	VALUES (?, ?, ?, ?)
+	INSERT INTO users (role_id, name, email, password, status)
+	VALUES (?, ?, ?, ?, ?)
 	RETURNING id, created_at, updated_at
 	`
 
@@ -75,6 +81,7 @@ func (r *Repository) Create(user *User) error {
 		user.Name,
 		user.Email,
 		user.Password,
+		user.Status,
 	).Scan(
 		&user.ID,
 		&user.CreatedAt,
@@ -84,9 +91,9 @@ func (r *Repository) Create(user *User) error {
 
 func (r *Repository) FindByEmail(email string) (*User, error) {
 	query := `
-	SELECT id, role_id, name, email, password, created_at, updated_at
+	SELECT id, role_id, name, email, password, COALESCE(status, 'active'), created_at, updated_at
 	FROM users
-	WHERE EMAIL = ?
+	WHERE email = ?
 	`
 
 	user := &User{}
@@ -97,6 +104,7 @@ func (r *Repository) FindByEmail(email string) (*User, error) {
 		&user.Name,
 		&user.Email,
 		&user.Password,
+		&user.Status,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -110,7 +118,7 @@ func (r *Repository) FindByEmail(email string) (*User, error) {
 
 func (r *Repository) FindByID(id int64) (*User, error) {
 	query := `
-		SELECT id, role_id, name, email, password, created_at, updated_at
+		SELECT id, role_id, name, email, password, COALESCE(status, 'active'), created_at, updated_at
 		FROM users
 		WHERE id = ?
 	`
@@ -123,6 +131,7 @@ func (r *Repository) FindByID(id int64) (*User, error) {
 		&user.Name,
 		&user.Email,
 		&user.Password,
+		&user.Status,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -133,3 +142,24 @@ func (r *Repository) FindByID(id int64) (*User, error) {
 
 	return user, nil
 }
+
+func (r *Repository) UpdateStatus(id int64, status string) error {
+	query := `
+		UPDATE users
+		SET status = ?, updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?
+	`
+	res, err := r.db.Exec(query, status, id)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+

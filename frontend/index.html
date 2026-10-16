@@ -20,17 +20,41 @@
   </header>
 
   <main>
-    <section class="hero container">
-      <div>
-        <p class="eyebrow">Find a place you can trust</p>
-        <h1>Find your next home with confidence.</h1>
-        <p class="hero-text">
-          Smart House Hunt helps tenants discover rental properties while
-          giving landlords a simple way to manage genuine listings.
-        </p>
-        <div class="hero-actions">
-          <a class="btn" href="pages/properties.html">Browse Houses</a>
-          <a class="btn secondary" href="pages/register.html">Get Started</a>
+    <section class="hero">
+      <div class="container">
+        <div class="hero-content">
+          <p class="eyebrow">Find a place you can trust</p>
+          <h1>Find your next home with confidence.</h1>
+          <p class="hero-text">
+            Smart House Hunt helps tenants discover rental properties while
+            giving landlords a simple way to manage genuine listings.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-hero-primary" href="pages/properties.html">Browse Houses</a>
+            <a class="btn btn-hero-secondary" href="pages/register.html">Get Started</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-features">
+      <div class="container">
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🔍</div>
+            <h3>Smart House Search</h3>
+            <p>Filter by house type, location, bedrooms, bathrooms, and price to find the perfect rental for your budget.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">📅</div>
+            <h3>Direct Viewing Visits</h3>
+            <p>Schedule in-person property tours directly with landlords without hassle, hidden fees, or middlemen.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🛡️</div>
+            <h3>Verified & Genuine</h3>
+            <p>Admin-approved listings and landlord verification give you complete peace of mind when house hunting.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -86,6 +110,14 @@
         authArea.appendChild(mineLink);
         authArea.appendChild(document.createTextNode(" "));
         authArea.appendChild(inquiriesLink);
+      }
+
+      if (user.role === "admin") {
+        const adminLink = document.createElement("a");
+        adminLink.href = "pages/admin-dashboard.html";
+        adminLink.textContent = "Admin Dashboard";
+        authArea.appendChild(document.createTextNode(" "));
+        authArea.appendChild(adminLink);
       }
     } else {
       const loginLink = document.createElement("a");

@@ -39,13 +39,18 @@ func Setup(router *gin.Engine, db *sql.DB, cfg *config.Config) {
 				c.JSON(http.StatusInternalServerError, gin.H{"message": "could not load profile"})
 				return
 			}
+			if user.Status == "suspended" {
+				c.JSON(http.StatusForbidden, gin.H{"message": "your account has been suspended"})
+				return
+			}
 
 			roleName, _ := usersRepo.RoleByID(user.RoleID)
 			c.JSON(http.StatusOK, gin.H{
-				"id":    user.ID,
-				"name":  user.Name,
-				"email": user.Email,
-				"role":  roleName,
+				"id":     user.ID,
+				"name":   user.Name,
+				"email":  user.Email,
+				"role":   roleName,
+				"status": user.Status,
 			})
 		})
 
@@ -56,19 +61,6 @@ func Setup(router *gin.Engine, db *sql.DB, cfg *config.Config) {
 			authAPI.POST("/logout", middleware.RequireAuth(cfg.JWTSecret), authHandler.Logout)
 		}
 
-		adminAPI := api.Group("/admin",
-			middleware.RequireAuth(cfg.JWTSecret),
-			middleware.RequireRole("admin"),
-		)
-		{
-			adminAPI.GET("/users", func(c *gin.Context) {
-				users, err := usersRepo.List()
-				if err != nil {
-					c.JSON(http.StatusInternalServerError, gin.H{"message": "could not load users"})
-					return
-				}
-				c.JSON(http.StatusOK, gin.H{"users": users})
-			})
-		}
+		SetupAdminRoutes(api, db, cfg)
 	}
 }

@@ -35,6 +35,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 		bedrooms INTEGER NOT NULL DEFAULT 1,
 		bathrooms INTEGER NOT NULL DEFAULT 1,
 		amenities TEXT NOT NULL DEFAULT '',
+		property_type TEXT NOT NULL DEFAULT 'apartment',
 		status TEXT NOT NULL DEFAULT 'pending',
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP

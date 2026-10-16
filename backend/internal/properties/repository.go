@@ -9,16 +9,19 @@ type Repository struct {
 	db *sql.DB
 }
 
-const propertyColumns = "id, landlord_id, title, description, location, price, bedrooms, bathrooms, amenities, status, created_at, updated_at"
+const propertyColumns = "id, landlord_id, title, description, location, price, bedrooms, bathrooms, amenities, property_type, status, created_at, updated_at"
 
 func NewRepository(db *sql.DB) *Repository {
 	return &Repository{db: db}
 }
 
 func (r *Repository) Create(property *Property) error {
+	if property.PropertyType == "" {
+		property.PropertyType = detectPropertyType(property.Title, property.Bedrooms)
+	}
 	query := `
-		INSERT INTO properties (landlord_id, title, description, location, price, bedrooms, bathrooms, amenities, status)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO properties (landlord_id, title, description, location, price, bedrooms, bathrooms, amenities, property_type, status)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		RETURNING id, status, created_at, updated_at
 	`
 
@@ -32,6 +35,7 @@ func (r *Repository) Create(property *Property) error {
 		property.Bedrooms,
 		property.Bathrooms,
 		property.Amenities,
+		property.PropertyType,
 		property.Status,
 	).Scan(
 		&property.ID,
@@ -59,6 +63,7 @@ func (r *Repository) FindByID(id int64) (*Property, error) {
 		&property.Bedrooms,
 		&property.Bathrooms,
 		&property.Amenities,
+		&property.PropertyType,
 		&property.Status,
 		&property.CreatedAt,
 		&property.UpdatedAt,
@@ -95,6 +100,7 @@ func (r *Repository) ListByLandlord(landlordID int64) ([]Property, error) {
 			&property.Bedrooms,
 			&property.Bathrooms,
 			&property.Amenities,
+			&property.PropertyType,
 			&property.Status,
 			&property.CreatedAt,
 			&property.UpdatedAt,
@@ -117,6 +123,10 @@ func (r *Repository) ListApproved(filters ...FilterParams) ([]Property, error) {
 			query += " AND LOWER(location) LIKE ?"
 			args = append(args, "%"+strings.ToLower(loc)+"%")
 		}
+		if pt := strings.TrimSpace(f.PropertyType); pt != "" {
+			query += " AND LOWER(property_type) = ?"
+			args = append(args, strings.ToLower(pt))
+		}
 		if f.MinPrice != nil {
 			query += " AND price >= ?"
 			args = append(args, *f.MinPrice)
@@ -125,7 +135,10 @@ func (r *Repository) ListApproved(filters ...FilterParams) ([]Property, error) {
 			query += " AND price <= ?"
 			args = append(args, *f.MaxPrice)
 		}
-		if f.Bedrooms != nil {
+		if f.MinBedrooms != nil {
+			query += " AND bedrooms >= ?"
+			args = append(args, *f.MinBedrooms)
+		} else if f.Bedrooms != nil {
 			query += " AND bedrooms = ?"
 			args = append(args, *f.Bedrooms)
 		}
@@ -165,6 +178,7 @@ func (r *Repository) ListApproved(filters ...FilterParams) ([]Property, error) {
 			&property.Bedrooms,
 			&property.Bathrooms,
 			&property.Amenities,
+			&property.PropertyType,
 			&property.Status,
 			&property.CreatedAt,
 			&property.UpdatedAt,
@@ -202,10 +216,13 @@ func (r *Repository) ListImagesByProperty(propertyID int64) ([]PropertyImage, er
 }
 
 func (r *Repository) Update(property *Property) error {
+	if property.PropertyType == "" {
+		property.PropertyType = detectPropertyType(property.Title, property.Bedrooms)
+	}
 	query := `
 		UPDATE properties
 		SET title = ?, description = ?, location = ?, price = ?,
-			bedrooms = ?, bathrooms = ?, amenities = ?, updated_at = CURRENT_TIMESTAMP
+			bedrooms = ?, bathrooms = ?, amenities = ?, property_type = ?, updated_at = CURRENT_TIMESTAMP
 		WHERE id = ?
 		RETURNING status, created_at, updated_at
 	`
@@ -219,6 +236,7 @@ func (r *Repository) Update(property *Property) error {
 		property.Bedrooms,
 		property.Bathrooms,
 		property.Amenities,
+		property.PropertyType,
 		property.ID,
 	).Scan(
 		&property.Status,
@@ -243,4 +261,34 @@ func (r *Repository) AddImage(image *PropertyImage) error {
 		&image.ID,
 		&image.CreatedAt,
 	)
+}
+
+func (r *Repository) UpdateStatus(id int64, status string) (*Property, error) {
+	query := `
+		UPDATE properties
+		SET status = ?, updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?
+		RETURNING ` + propertyColumns + `
+	`
+
+	p := &Property{}
+	err := r.db.QueryRow(query, status, id).Scan(
+		&p.ID,
+		&p.LandlordID,
+		&p.Title,
+		&p.Description,
+		&p.Location,
+		&p.Price,
+		&p.Bedrooms,
+		&p.Bathrooms,
+		&p.Amenities,
+		&p.PropertyType,
+		&p.Status,
+		&p.CreatedAt,
+		&p.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return p, nil
 }
